@@ -1,0 +1,12 @@
+{
+  "id": "ea002_simple-vest",
+  "name": "Simple Vest",
+  "description": "A basic leather vest worn by recruits and travelers alike.",
+  "icon": "simple_vest",
+  "type": "equipment",
+  "category": "armour",
+  "effects": [
+    "+5 STR",
+    "+5 AGI"
+  ]
+}

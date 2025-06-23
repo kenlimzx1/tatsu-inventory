@@ -1,0 +1,12 @@
+{
+  "id": "eh003_heavy-helmet",
+  "name": "Heavy Helmet",
+  "description": "A bulky steel helm with reinforced plating, often worn by frontline knights.",
+  "icon": "heavy_helmet",
+  "type": "equipment",
+  "category": "helmet",
+  "effects": [
+    "+30 INT",
+    "+5 STR"
+  ]
+}

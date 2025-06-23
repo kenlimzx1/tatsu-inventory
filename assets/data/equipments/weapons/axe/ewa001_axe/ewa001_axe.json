@@ -1,0 +1,11 @@
+{
+  "id": "ewa001_axe",
+  "name": "Axe",
+  "description": "A heavy-bladed weapon forged to cleave through both wood and armor with brutal force.",
+  "icon": "axe",
+  "type": "equipment",
+  "category": "weapon",
+  "effects": [
+    "+10 STR"
+  ]
+}

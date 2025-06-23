@@ -34,6 +34,7 @@ export class InventoryView extends Component {
 
   private itemSlots: InventoryGameItemSlotView[] = [];
   private currentTab: InventoryTab = 'equipment';
+  private selectedItemIndex: number = -1;
 
   protected start(): void {
   }
@@ -53,6 +54,9 @@ export class InventoryView extends Component {
       totalSlots = 0; // Default to 0 if the tab is not recognized
     }
     this.generateSlots(totalSlots);
+    if (this.selectedItemIndex !== -1)
+      this.itemSlots[this.selectedItemIndex].hideSelectedIndicator();
+    this.selectedItemIndex = -1;
   }
 
   private generateSlots(totalSlots: number) {
@@ -108,7 +112,23 @@ export class InventoryView extends Component {
   }
 
   private selectItem(index: number) {
-    console.log("selected: " + index);
+    if (this.selectedItemIndex === index) {
+      this.useOrEquipItem();
+    } else {
+      if (this.selectedItemIndex !== -1) {
+        this.itemSlots[this.selectedItemIndex].hideSelectedIndicator();
+      }
+      this.selectedItemIndex = index;
+      this.itemSlots[this.selectedItemIndex].showSelectedIndicator();
+    }
+  }
+
+  private useOrEquipItem() {
+    // this.selectedItemIndex
+    this.itemSlots[this.selectedItemIndex].hideSelectedIndicator();
+    console.log("Use Item at index: ", this.selectedItemIndex);
+
+    this.selectedItemIndex = -1;
   }
 
   private hoverItem(index: number) {

@@ -1,4 +1,4 @@
-import { _decorator, Button, Component, EventTouch, Input, input, Label, Node, Sprite, SpriteFrame } from 'cc';
+import { _decorator, Button, Component, EventTouch, Input, input, Label, Node, Sprite, SpriteFrame, Tween, tween, Vec3 } from 'cc';
 import { GameItem } from '../../gameItem/GameItem';
 const { ccclass, property } = _decorator;
 
@@ -35,6 +35,9 @@ export class InventoryGameItemSlotView extends Component {
   @property(Label)
   private quantityLabel: Label = null!;
 
+  @property(Node)
+  private selectedIndicator: Node = null!;
+
   private index: number = 0;
 
   private data: InventoryGameItemSlotViewData | null = null;
@@ -42,9 +45,7 @@ export class InventoryGameItemSlotView extends Component {
   protected start(): void {
     this.button.node.on(Node.EventType.MOUSE_ENTER, (event: EventTouch) => this.hover(event as EventTouch));
     this.button.node.on(Node.EventType.MOUSE_LEAVE, (event: EventTouch) => this.unHover(event as EventTouch));
-    // this.node.on(Input.EventType.TOUCH_START, this.selectStart, this);
-    // this.node.on(Input.EventType.TOUCH_MOVE, this.selectMove, this);
-    // this.node.on(Input.EventType.TOUCH_END, this.selectEnd, this);
+    this.hideSelectedIndicator();
   }
 
   init(data: InventoryGameItemSlotViewData) {
@@ -68,29 +69,30 @@ export class InventoryGameItemSlotView extends Component {
   }
 
   select() {
-    console.log(`Slot ${this.index} selected`);
+    this.data!.onSelect(this.index);
+  }
+
+  showSelectedIndicator() {
+    Tween.stopAllByTarget(this.selectedIndicator);
+    this.selectedIndicator.active = true;
+    this.selectedIndicator.setScale(new Vec3(1, 1, 1));
+    tween(this.selectedIndicator)
+      .to(0.2, { scale: new Vec3(.9, .9, 1) })
+      .to(0.2, { scale: new Vec3(1, 1, 1) })
+      .start();
+  }
+
+  hideSelectedIndicator() {
+    Tween.stopAllByTarget(this.selectedIndicator);
+    this.selectedIndicator.active = false;
   }
 
   hover(event: EventTouch) {
     this.data!.onHover(this.index);
-    console.log(`Slot ${this.index} hovered`);
   }
 
   unHover(event: EventTouch) {
     this.data!.onUnHover(this.index);
-    console.log(`Slot ${this.index} unhovered`);
-  }
-
-  selectStart(event: EventTouch) {
-    console.log(`Slot ${this.index} selected`);
-  }
-
-  selectMove(event: EventTouch) {
-    console.log(`Slot ${this.index} move ` + event.getLocation().toString());
-  }
-
-  selectEnd(event: EventTouch) {
-    console.log(`Slot ${this.index} selection ended`);
   }
 }
 

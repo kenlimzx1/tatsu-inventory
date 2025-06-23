@@ -1,4 +1,4 @@
-import { _decorator, Component, director, Label } from 'cc';
+import { _decorator, Component, director, Label, Sprite } from 'cc';
 import { GameItemDatabase } from './gameItem/GameItemDatabase';
 const { ccclass, property } = _decorator;
 
@@ -6,15 +6,18 @@ const { ccclass, property } = _decorator;
 export class InitSceneController extends Component {
 
   @property(Label)
-  private loadingLabel: Label | null = null;
+  private loadingLabel: Label = null!;
+
+  @property(Sprite)
+  private spr: Sprite = null!;
 
   async start() {
     console.log("InitSceneController start");
 
     await this.loadDatabase();
 
-    const info = GameItemDatabase.instance.getConsumableInfo("cp001_mana-potion");
-    console.log("Consumable Info:" + info!.effects);
+    const img = GameItemDatabase.instance.getImage("light_vest");
+    this.spr.spriteFrame = img;
 
     this.scheduleOnce(() => {
       this.loadNextScene();

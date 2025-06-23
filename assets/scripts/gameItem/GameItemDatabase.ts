@@ -1,4 +1,4 @@
-import { _decorator, Asset, assetManager, AssetManager, Component, Node, TextAsset, Texture2D } from 'cc';
+import { _decorator, Asset, assetManager, AssetManager, Component, Node, SpriteFrame, TextAsset, Texture2D } from 'cc';
 import { GameItem } from './GameItem';
 const { ccclass, property } = _decorator;
 
@@ -15,7 +15,7 @@ export class GameItemDatabase extends Component {
 
   private _consumables: Map<string, GameItem> = new Map();
   private _equipments: Map<string, GameItem> = new Map();
-  private _images: Map<string, Texture2D> = new Map();
+  private _images: Map<string, SpriteFrame> = new Map();
   private _isLoading: boolean = false;
   public get isLoading(): boolean {
     return this._isLoading;
@@ -48,10 +48,9 @@ export class GameItemDatabase extends Component {
         const gameItemData = (textFile as { json?: GameItem }).json!;
         this._consumables.set(gameItemData.id, gameItemData);
       }
-      else if (splits[splits.length - 1] === "texture") {
-        const imagePath = path.replace("/texture", "");
+      else if (splits[splits.length - 1] === "spriteFrame") {
         const imageName = splits[splits.length - 2];
-        const image = await this.loadFile<Texture2D>(consumablesBundle, imagePath);
+        const image = await this.loadFile<SpriteFrame>(consumablesBundle, path);
         this._images.set(imageName, image);
       }
     }
@@ -70,10 +69,9 @@ export class GameItemDatabase extends Component {
         const gameItemData = (textFile as { json?: GameItem }).json!;
         this._equipments.set(gameItemData.id, gameItemData);
       }
-      else if (splits[splits.length - 1] === "texture") {
-        const imagePath = path.replace("/texture", "");
+      else if (splits[splits.length - 1] === "spriteFrame") {
         const imageName = splits[splits.length - 2];
-        const image = await this.loadFile<Texture2D>(equipmentsBundle, imagePath);
+        const image = await this.loadFile<SpriteFrame>(equipmentsBundle, path);
         this._images.set(imageName, image);
       }
     }
@@ -111,7 +109,7 @@ export class GameItemDatabase extends Component {
     return this._equipments.get(id) || null;
   }
 
-  public getImage(id: string): Texture2D | null {
+  public getImage(id: string): SpriteFrame | null {
     return this._images.get(id) || null;
   }
 }

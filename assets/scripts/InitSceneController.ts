@@ -1,14 +1,63 @@
-import { _decorator, Component, Node } from 'cc';
+import { _decorator, Component, director, Label } from 'cc';
+import { GameItemDatabase } from './gameItem/GameItemDatabase';
 const { ccclass, property } = _decorator;
 
 @ccclass('InitSceneController')
 export class InitSceneController extends Component {
-    start() {
 
-    }
+  @property(Label)
+  private loadingLabel: Label | null = null;
 
-    update(deltaTime: number) {
-        
+  async start() {
+    console.log("InitSceneController start");
+
+    await this.loadDatabase();
+
+    const info = GameItemDatabase.instance.getConsumableInfo("cp001_mana-potion");
+    console.log("Consumable Info:" + info!.effects);
+
+    this.scheduleOnce(() => {
+      this.loadNextScene();
+    }, 1);
+  }
+
+  private async loadDatabase() {
+    await GameItemDatabase.instance.loadDatabase();
+    this.updateLoadingLabel("Database Loaded");
+  }
+
+  loadNextScene() {
+    director.loadScene("gameScene");
+  }
+
+  update(deltaTime: number) {
+    this.checkLoadingDatabase();
+  }
+
+  private checkLoadingDatabase() {
+    if (!GameItemDatabase.instance.isLoading)
+      return;
+    switch (GameItemDatabase.instance.status) {
+      case "loading_consumables":
+        this.updateLoadingLabel("Loading Consumables...");
+        break;
+      case "loading_equipments":
+        this.updateLoadingLabel("Loading Equipments...");
+        break;
+      case "complete":
+        this.updateLoadingLabel("Loading Complete!");
+        break;
+      default:
+        this.updateLoadingLabel("Loading...");
+        break;
     }
+  }
+
+  private updateLoadingLabel(message: string) {
+    if (this.loadingLabel) {
+      this.loadingLabel.string = message;
+    }
+  }
 }
-
+
+

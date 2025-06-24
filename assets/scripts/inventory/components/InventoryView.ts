@@ -1,9 +1,10 @@
-import { _decorator, Component, EventMouse, Input, input, instantiate, Node, Prefab, SpriteFrame, Tween, tween, UITransform, Vec2, Vec3 } from 'cc';
+import { _decorator, Component, instantiate, Node, Prefab, SpriteFrame, Tween, tween, Vec3 } from 'cc';
 import { InventoryManager } from '../InventoryManager';
 import { InventoryGameItemSlotView, InventoryGameItemSlotViewData } from './InventoryGameItemSlotView';
 import { GameItemDatabase } from '../../gameItem/GameItemDatabase';
 import { GameItem } from '../../gameItem/GameItem';
 import { InventoryTooltipPosition, InventoryTooltipUI, InventoryTooltipUIData } from './InventoryTooltipUI';
+import { CharacterManager } from '../../character/CharacterManager';
 const { ccclass, property } = _decorator;
 
 export type InventoryTab = 'equipment' | 'consumable';
@@ -13,6 +14,9 @@ export class InventoryView extends Component {
 
   @property(InventoryManager)
   private inventoryManager: InventoryManager = null!;
+
+  @property(CharacterManager)
+  private characterManager: CharacterManager = null!;
 
   @property(Prefab)
   private inventorySlotPrefab: Prefab = null!;

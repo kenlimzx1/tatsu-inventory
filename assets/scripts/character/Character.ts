@@ -3,12 +3,19 @@ const { ccclass, property } = _decorator;
 
 @ccclass('Character')
 export class Character extends Component {
-    start() {
+  private data: CharacterData = null!;
 
-    }
+  public init(data: CharacterData) {
+    this.data = data;
+  }
 
-    update(deltaTime: number) {
-        
-    }
+  public equip(equipItemId: string) {
+
+  }
+
+  public use(consumableItemId: string) {
+
+  }
 }
-
+
+

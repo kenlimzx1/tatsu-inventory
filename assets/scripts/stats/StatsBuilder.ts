@@ -1,9 +1,17 @@
-import { Agility } from "./Agility";
-import { Health } from "./Health";
-import { Intelligent } from "./Intelligent";
-import { Mana } from "./Mana";
+import { StatsAgility } from "./StatsAgility";
+import { StatsHealth } from "./StatsHealth";
+import { StatsIntelligent } from "./StatsIntelligent";
+import { StatsMana } from "./StatsMana";
 import { Stats } from "./Stats";
-import { Strength } from "./Strength";
+import { StatsStrength } from "./StatsStrength";
+
+export interface StatsCollection {
+  str: StatsStrength;
+  int: StatsIntelligent;
+  agi: StatsAgility;
+  hp: StatsHealth;
+  mp: StatsMana;
+}
 
 export class StatsBuilder {
   public static buildFromEffect(effectString: string): Stats {
@@ -15,17 +23,27 @@ export class StatsBuilder {
 
     switch (splits[1]) {
       case "STR":
-        return new Strength(amount);
+        return new StatsStrength(amount);
       case "INT":
-        return new Intelligent(amount);
+        return new StatsIntelligent(amount);
       case "AGI":
-        return new Agility(amount);
+        return new StatsAgility(amount);
       case "HP":
-        return new Health(amount);
+        return new StatsHealth(amount);
       case "MP":
-        return new Mana(amount);
+        return new StatsMana(amount);
       default:
         throw new Error(`Unknown stat type: ${splits[1]}`);
+    }
+  }
+
+  public static getDefaultStatsCollectionValue(): StatsCollection {
+    return {
+      hp: new StatsHealth(0),
+      mp: new StatsMana(0),
+      str: new StatsStrength(0),
+      agi: new StatsAgility(0),
+      int: new StatsIntelligent(0),
     }
   }
 }

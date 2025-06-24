@@ -1,12 +1,13 @@
 import { _decorator, Component, Node } from 'cc';
 import { GameItemDatabase } from '../gameItem/GameItemDatabase';
-import { Health } from '../stats/Health';
-import { Mana } from '../stats/Mana';
-import { Strength } from '../stats/Strength';
-import { Agility } from '../stats/Agility';
-import { Intelligent } from '../stats/Intelligent';
+import { StatsHealth } from '../stats/StatsHealth';
+import { StatsMana } from '../stats/StatsMana';
+import { StatsStrength } from '../stats/StatsStrength';
+import { StatsAgility } from '../stats/StatsAgility';
+import { StatsIntelligent } from '../stats/StatsIntelligent';
 import { Stats } from '../stats/Stats';
-import { StatsBuilder } from '../stats/StatsBuilder';
+import { StatsBuilder, StatsCollection } from '../stats/StatsBuilder';
+import EventBus, { BaseEvent } from '../sys/eventBus/EventBus';
 const { ccclass, property } = _decorator;
 
 @ccclass('Character')
@@ -31,26 +32,68 @@ export class Character extends Component {
   @property
   public equippedWeapon: string = "";
 
-  private currentHealth: number = 0;
-  private currentMana: number = 0;
-  private currentMaxHealth: Health = new Health(0);
-  private currentMaxMana: Mana = new Mana(0);
-  private currentStr: Strength = new Strength(0);
-  private currentAgi: Agility = new Agility(0);
-  private currentInt: Intelligent = new Intelligent(0);
+  private _currentHealth: number = 0;
+  public get currentHealth() {
+    return this._currentHealth;
+  }
+
+  private _currentMana: number = 0;
+  public get currentMana() {
+    return this._currentMana;
+  }
+
+  private _currentMaxHealth: StatsHealth = new StatsHealth(0);
+  public get currentMaxHealth() {
+    return this._currentMaxHealth;
+  }
+
+  private _currentMaxMana: StatsMana = new StatsMana(0);
+  public get currentMaxMana() {
+    return this._currentMaxMana;
+  }
+
+  private _currentStr: StatsStrength = new StatsStrength(0);
+  public get currentStr() {
+    return this._currentStr;
+  }
+
+  private _currentAgi: StatsAgility = new StatsAgility(0);
+  public get currentAgi() {
+    return this._currentAgi;
+  }
+
+  private _currentInt: StatsIntelligent = new StatsIntelligent(0);
+  public get currentInt() {
+    return this._currentInt;
+  }
 
   public init() {
-    this.currentHealth = this.baseMaxHealth;
-    this.currentMana = this.baseMaxMana;
-    this.currentMaxHealth = new Health(this.baseMaxHealth);
-    this.currentMaxMana = new Mana(this.baseMaxMana);
-    this.currentStr = new Strength(this.baseStr);
-    this.currentAgi = new Agility(this.baseAgi);
-    this.currentInt = new Intelligent(this.baseInt);
+    this._currentMaxHealth = new StatsHealth(this.baseMaxHealth);
+    this._currentMaxMana = new StatsMana(this.baseMaxMana);
+    this._currentStr = new StatsStrength(this.baseStr);
+    this._currentAgi = new StatsAgility(this.baseAgi);
+    this._currentInt = new StatsIntelligent(this.baseInt);
     this.updateStats();
+    this._currentHealth = this._currentMaxHealth.amount;
+    this._currentMana = this._currentMaxMana.amount;
   }
 
   public equip(equipItemId: string) {
+    const equipmentInfo = GameItemDatabase.instance.getEquipmentInfo(equipItemId);
+    switch (equipmentInfo!.category) {
+      case "armour":
+        this.equippedArmour = equipItemId;
+        break;
+      case "helmet":
+        this.equippedHelmet = equipItemId;
+        break;
+      case "boots":
+        this.equippedBoots = equipItemId;
+        break;
+      case "weapon":
+        this.equippedWeapon = equipItemId;
+        break;
+    }
     this.updateStats();
   }
 
@@ -58,47 +101,140 @@ export class Character extends Component {
 
   }
 
-  private updateStats() {
-    let addedStats: Stats[] = [
-      new Strength(0),
-      new Agility(0),
-      new Intelligent(0),
-      new Health(0),
-      new Mana(0)
-    ];
-
-    if (this.equippedHelmet && this.equippedHelmet !== "") {
-      const helmetInfo = GameItemDatabase.instance.getEquipmentInfo(this.equippedHelmet);
-      const helmetStats = this.convertEffects(helmetInfo!.effects);
-      this.combineStats(addedStats, helmetStats);
-    }
-
-    if (this.equippedArmour && this.equippedArmour !== "") {
-      const armourInfo = GameItemDatabase.instance.getEquipmentInfo(this.equippedArmour);
-      const armourStats = this.convertEffects(armourInfo!.effects);
-      this.combineStats(addedStats, armourStats);
-    }
-
-    if (this.equippedBoots && this.equippedBoots !== "") {
-      const bootsInfo = GameItemDatabase.instance.getEquipmentInfo(this.equippedBoots);
-      const bootsStats = this.convertEffects(bootsInfo!.effects);
-      this.combineStats(addedStats, bootsStats);
-    }
+  public hit(amount: number) {
+    const prevHealth = this._currentHealth;
+    this._currentHealth -= amount;
+    EventBus.publish(HealthStatsChangedEvent.EVENT_ID, new HealthStatsChangedEvent(prevHealth, this._currentHealth, this._currentMaxHealth.amount, this._currentMaxHealth.amount));
   }
 
-  private combineStats(source: Stats[], target: Stats[]) {
+  public heal(amount: number) {
+    const prevHealth = this._currentHealth;
+    this._currentHealth += amount;
+    EventBus.publish(HealthStatsChangedEvent.EVENT_ID, new HealthStatsChangedEvent(prevHealth, this._currentHealth, this._currentMaxHealth.amount, this._currentMaxHealth.amount));
+  }
 
+  public useMana(amount: number) {
+    const prevMana = this._currentMana;
+    this._currentMana -= amount;
+    EventBus.publish(ManaStatsChangedEvent.EVENT_ID, new ManaStatsChangedEvent(prevMana, this._currentMana, this._currentMaxMana.amount, this._currentMaxMana.amount));
+  }
+
+  public recoverMana(amount: number) {
+    const prevMana = this._currentMana;
+    this._currentMana += amount;
+    EventBus.publish(ManaStatsChangedEvent.EVENT_ID, new ManaStatsChangedEvent(prevMana, this._currentMana, this._currentMaxMana.amount, this._currentMaxMana.amount));
+  }
+
+  private updateStats() {
+    const equipment = [
+      this.equippedHelmet,
+      this.equippedArmour,
+      this.equippedBoots,
+      this.equippedWeapon
+    ];
+
+    let totalStats: StatsCollection = StatsBuilder.getDefaultStatsCollectionValue();
+
+    for (const equipId of equipment) {
+      if (equipId) {
+        const equipInfo = GameItemDatabase.instance.getEquipmentInfo(equipId);
+        if (equipInfo && equipInfo.effects) {
+          const stats = this.convertEffects(equipInfo.effects);
+          const applied = this.applyStats(stats);
+          totalStats.str.amount += applied.str.amount;
+          totalStats.agi.amount += applied.agi.amount;
+          totalStats.int.amount += applied.int.amount;
+          totalStats.hp.amount += applied.hp.amount;
+          totalStats.mp.amount += applied.mp.amount;
+        }
+      }
+    }
+
+    const prevStats: StatsCollection = {
+      str: new StatsStrength(this._currentStr.amount),
+      agi: new StatsAgility(this._currentAgi.amount),
+      int: new StatsIntelligent(this._currentInt.amount),
+      hp: new StatsHealth(this._currentMaxHealth.amount),
+      mp: new StatsMana(this._currentMaxMana.amount)
+    }
+
+    this._currentStr = new StatsStrength(this.baseStr + totalStats.str.amount);
+    this._currentAgi = new StatsAgility(this.baseAgi + totalStats.agi.amount);
+    this._currentInt = new StatsIntelligent(this.baseInt + totalStats.int.amount);
+    this._currentMaxHealth = new StatsHealth(this.baseMaxHealth + totalStats.hp.amount);
+    this._currentMaxMana = new StatsMana(this.baseMaxMana + totalStats.mp.amount);
+
+    const currentStats: StatsCollection = {
+      str: new StatsStrength(this._currentStr.amount),
+      agi: new StatsAgility(this._currentAgi.amount),
+      int: new StatsIntelligent(this._currentInt.amount),
+      hp: new StatsHealth(this._currentMaxHealth.amount),
+      mp: new StatsMana(this._currentMaxMana.amount)
+    }
+
+    EventBus.publish(UpdateStatsEvent.EVENT_ID, new UpdateStatsEvent(prevStats, currentStats));
+  }
+
+  private applyStats(stats: Stats[]): StatsCollection {
+    const statCollection: StatsCollection = StatsBuilder.getDefaultStatsCollectionValue();
+    for (const stat of stats) {
+      if (stat instanceof StatsStrength) statCollection.str.amount += stat.amount;
+      else if (stat instanceof StatsAgility) statCollection.agi.amount += stat.amount;
+      else if (stat instanceof StatsIntelligent) statCollection.int.amount += stat.amount;
+      else if (stat instanceof StatsMana) statCollection.mp.amount += stat.amount;
+      else if (stat instanceof StatsHealth) statCollection.hp.amount += stat.amount;
+    }
+    return statCollection;
   }
 
   private convertEffects(effects: string[]): Stats[] {
-    let stats: Stats[] = [];
-    for (let i = 0; i < effects.length; i++) {
-      const effect = effects[i];
-      const stat = StatsBuilder.buildFromEffect(effect);
-      stats.push(stat);
-    }
-    return stats;
+    return effects.map(effect => StatsBuilder.buildFromEffect(effect));
   }
 }
 
+export class UpdateStatsEvent extends BaseEvent {
+  public previousStats: StatsCollection;
+  public currentStats: StatsCollection;
 
+  public static readonly EVENT_ID = "update-stats";
+
+  constructor(previousStats: StatsCollection, currentStats: StatsCollection) {
+    super(UpdateStatsEvent.EVENT_ID);
+    this.previousStats = previousStats;
+    this.currentStats = currentStats;
+  }
+}
+
+export class HealthStatsChangedEvent extends BaseEvent {
+  public previousHealth: number;
+  public previousMaxHealth: number;
+  public currentHealth: number;
+  public currentMaxHealth: number;
+
+  public static readonly EVENT_ID = "health-changed";
+
+  constructor(previousHealth: number, currentHealth: number, previousMaxHealth: number, currentMaxHealth: number) {
+    super(HealthStatsChangedEvent.EVENT_ID);
+    this.previousHealth = previousHealth;
+    this.currentHealth = currentHealth;
+    this.previousMaxHealth = previousMaxHealth;
+    this.currentMaxHealth = currentMaxHealth;
+  }
+}
+
+export class ManaStatsChangedEvent extends BaseEvent {
+  public previousMana: number;
+  public currentMana: number;
+  public previousMaxMana: number;
+  public currentMaxMana: number;
+
+  public static readonly EVENT_ID = "mana-changed";
+
+  constructor(previousMana: number, currentMana: number, previousMaxMana: number, currentMaxMana: number) {
+    super(ManaStatsChangedEvent.EVENT_ID);
+    this.previousMana = previousMana;
+    this.currentMana = currentMana;
+    this.previousMaxMana = previousMaxMana;
+    this.currentMaxMana = currentMaxMana;
+  }
+}

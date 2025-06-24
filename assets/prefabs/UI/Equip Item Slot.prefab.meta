@@ -2,12 +2,12 @@
   "ver": "1.1.50",
   "importer": "prefab",
   "imported": true,
-  "uuid": "d0534e02-e833-4174-862f-d0f6b2e951cd",
+  "uuid": "71d04d8a-cacf-430d-95eb-d51770d4d0e0",
   "files": [
     ".json"
   ],
   "subMetas": {},
   "userData": {
-    "syncNodeName": "Equip Slot"
+    "syncNodeName": "Equip Item Slot"
   }
 }

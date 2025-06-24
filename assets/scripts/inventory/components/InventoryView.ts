@@ -5,6 +5,7 @@ import { GameItemDatabase } from '../../gameItem/GameItemDatabase';
 import { GameItem } from '../../gameItem/GameItem';
 import { InventoryTooltipPosition, InventoryTooltipUI, InventoryTooltipUIData } from './InventoryTooltipUI';
 import { Character } from '../../character/Character';
+import { EquipmentSlotView, EquipmentSlotViewData } from './EquipmentSlotView';
 const { ccclass, property } = _decorator;
 
 export type InventoryTab = 'equipment' | 'consumable';
@@ -20,6 +21,18 @@ export class InventoryView extends Component {
 
   @property(Prefab)
   private inventorySlotPrefab: Prefab = null!;
+
+  @property(EquipmentSlotView)
+  private helmetSlot: EquipmentSlotView = null!;
+
+  @property(EquipmentSlotView)
+  private armourSlot: EquipmentSlotView = null!;
+
+  @property(EquipmentSlotView)
+  private bootsSlot: EquipmentSlotView = null!;
+
+  @property(EquipmentSlotView)
+  private weaponSlot: EquipmentSlotView = null!;
 
   @property(Node)
   private inventoryContent: Node = null!;
@@ -117,7 +130,13 @@ export class InventoryView extends Component {
 
   private selectItem(index: number) {
     if (this.selectedItemIndex === index) {
-      this.useOrEquipItem();
+      if (this.currentTab === "equipment") {
+        this.equipItem();
+      } else {
+        this.useItem();
+      }
+      this.itemSlots[this.selectedItemIndex].hideSelectedIndicator();
+      this.selectedItemIndex = -1;
     } else {
       if (this.selectedItemIndex !== -1) {
         this.itemSlots[this.selectedItemIndex].hideSelectedIndicator();
@@ -127,12 +146,65 @@ export class InventoryView extends Component {
     }
   }
 
-  private useOrEquipItem() {
-    // this.selectedItemIndex
-    this.itemSlots[this.selectedItemIndex].hideSelectedIndicator();
-    console.log("Use Item at index: ", this.selectedItemIndex);
+  private equipItem() {
+    const slot = this.inventoryManager.getSlot(this.selectedItemIndex, "equipment");
+    const equipmentInfo = GameItemDatabase.instance.getEquipmentInfo(slot!.itemId);
+    const equipmentIcon = GameItemDatabase.instance.getImage(equipmentInfo!.icon)!;
 
-    this.selectedItemIndex = -1;
+    let needToPutBackEquipment: string = "";
+    let equipmentSlot: EquipmentSlotView;
+
+    switch (equipmentInfo!.category) {
+      case "helmet":
+        if (this.character.equippedHelmet !== "")
+          needToPutBackEquipment = this.character.equippedHelmet;
+        equipmentSlot = this.helmetSlot;
+        break;
+      case "armour":
+        if (this.character.equippedArmour !== "")
+          needToPutBackEquipment = this.character.equippedArmour;
+        equipmentSlot = this.armourSlot;
+        break;
+      case "boots":
+        if (this.character.equippedBoots !== "")
+          needToPutBackEquipment = this.character.equippedBoots;
+        equipmentSlot = this.bootsSlot;
+        break;
+      case "weapon":
+        if (this.character.equippedWeapon !== "")
+          needToPutBackEquipment = this.character.equippedWeapon;
+        equipmentSlot = this.weaponSlot;
+        break;
+    }
+
+    slot!.setItem(needToPutBackEquipment, 1);
+
+    // refresh inventory slot view here
+    const slotViewData = new InventoryGameItemSlotViewData(
+      this.selectedItemIndex,
+      equipmentInfo,
+      equipmentIcon,
+      1,
+      (index: number) => this.selectItem(index),
+      (index: number) => this.hoverItem(index),
+      (index: number) => this.unHoverItem(index)
+    );
+    this.itemSlots[this.selectedItemIndex].init(slotViewData);
+
+    // const equipmentData = new EquipmentSlotViewData(
+    //   equipmentInfo!.category,
+    //   equipmentInfo,
+    //   equipmentIcon,
+
+    // )
+
+    // this.weaponSlot.init()
+
+    this.character.equip(equipmentInfo!.id);
+  }
+
+  private useItem() {
+
   }
 
   private hoverItem(index: number) {

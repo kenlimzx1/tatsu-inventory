@@ -4,7 +4,7 @@ import { InventoryGameItemSlotView, InventoryGameItemSlotViewData } from './Inve
 import { GameItemDatabase } from '../../gameItem/GameItemDatabase';
 import { GameItem } from '../../gameItem/GameItem';
 import { InventoryTooltipPosition, InventoryTooltipUI, InventoryTooltipUIData } from './InventoryTooltipUI';
-import { CharacterManager } from '../../character/CharacterManager';
+import { Character } from '../../character/Character';
 const { ccclass, property } = _decorator;
 
 export type InventoryTab = 'equipment' | 'consumable';
@@ -12,11 +12,11 @@ export type InventoryTab = 'equipment' | 'consumable';
 @ccclass('InventoryView')
 export class InventoryView extends Component {
 
+  @property(Character)
+  private character: Character = null!;
+
   @property(InventoryManager)
   private inventoryManager: InventoryManager = null!;
-
-  @property(CharacterManager)
-  private characterManager: CharacterManager = null!;
 
   @property(Prefab)
   private inventorySlotPrefab: Prefab = null!;

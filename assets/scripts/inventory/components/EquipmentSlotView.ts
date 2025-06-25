@@ -7,6 +7,7 @@ export class EquipmentSlotViewData {
     public index: number,
     public gameItem: GameItem | null,
     public icon: SpriteFrame | null,
+    public equipCategoryIcon: SpriteFrame | null,
     public onSelect: (index: number) => void,
     public onHover: (index: number) => void = () => { },
     public onUnHover: (index: number) => void = () => { }
@@ -28,10 +29,13 @@ export class EquipmentSlotView extends Component {
   @property(Node)
   private selectedIndicator: Node = null!;
 
+  @property(Sprite)
+  private categorySprite: Sprite = null!;
+
   private index = -1;
   private data: EquipmentSlotViewData | null = null;
 
-  public isEmpty(): boolean {
+  public get isEmpty(): boolean {
     return !this.data?.gameItem;
   }
 
@@ -44,11 +48,13 @@ export class EquipmentSlotView extends Component {
   init(data: EquipmentSlotViewData) {
     this.data = data;
     this.index = data.index;
-    const hasItem = !!data.gameItem;
-    this.emptySlotIndicator.active = !hasItem;
-    this.itemIcon.node.active = hasItem;
-    if (hasItem)
+    this.emptySlotIndicator.active = this.isEmpty;
+    this.itemIcon.node.active = !this.isEmpty;
+    this.categorySprite.node.active = true;
+    this.categorySprite.spriteFrame = data.equipCategoryIcon;
+    if (!this.isEmpty) {
       this.itemIcon.spriteFrame = data.icon;
+    }
   }
 
   select() {

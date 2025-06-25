@@ -176,6 +176,30 @@
     "selectedTabIndicator": {
       "__id__": 244
     },
+    "itemCategorySprites": [
+      {
+        "__uuid__": "e4b46169-6c76-4360-977e-ba84511cdc9e@f9941",
+        "__expectedType__": "cc.SpriteFrame"
+      }
+    ],
+    "equipmentCategorySprites": [
+      {
+        "__uuid__": "b22f7c6e-23c1-4dce-9c28-d08e82563c09@f9941",
+        "__expectedType__": "cc.SpriteFrame"
+      },
+      {
+        "__uuid__": "8fd42c5e-ce2d-42c8-a82a-f984f097694e@f9941",
+        "__expectedType__": "cc.SpriteFrame"
+      },
+      {
+        "__uuid__": "184505c9-0516-435f-9bac-81d5cd6da180@f9941",
+        "__expectedType__": "cc.SpriteFrame"
+      },
+      {
+        "__uuid__": "9462d371-c650-4687-89a3-b916d61aa0ad@f9941",
+        "__expectedType__": "cc.SpriteFrame"
+      }
+    ],
     "tooltip": {
       "__id__": 297
     },

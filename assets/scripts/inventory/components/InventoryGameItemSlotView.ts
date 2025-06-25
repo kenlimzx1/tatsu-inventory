@@ -8,6 +8,7 @@ export class InventoryGameItemSlotViewData {
     public gameItem: GameItem | null,
     public icon: SpriteFrame | null,
     public quantity: number = 0,
+    public itemCategoryIcon: SpriteFrame | null,
     public onSelect: (index: number) => void = () => { },
     public onHover: (index: number) => void = () => { },
     public onUnHover: (index: number) => void = () => { }
@@ -31,6 +32,9 @@ export class InventoryGameItemSlotView extends Component {
   @property(Node)
   private selectedIndicator: Node = null!;
 
+  @property(Sprite)
+  private categorySprite: Sprite = null!;
+
   private data: InventoryGameItemSlotViewData | null = null;
 
   public get isEmpty(): boolean {
@@ -47,8 +51,10 @@ export class InventoryGameItemSlotView extends Component {
     this.data = data;
     this.emptySlotIndicator.active = this.isEmpty;
     this.itemIcon.node.active = !this.isEmpty;
+    this.categorySprite.node.active = !this.isEmpty;
     if (!this.isEmpty) {
       this.itemIcon.spriteFrame = data.icon;
+      this.categorySprite.spriteFrame = data.itemCategoryIcon;
     }
     this.updateQuantityLabel();
   }

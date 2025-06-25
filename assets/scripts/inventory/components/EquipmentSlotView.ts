@@ -47,7 +47,8 @@ export class EquipmentSlotView extends Component {
     const hasItem = !!data.gameItem;
     this.emptySlotIndicator.active = !hasItem;
     this.itemIcon.node.active = hasItem;
-    if (hasItem) this.itemIcon.spriteFrame = data.icon;
+    if (hasItem)
+      this.itemIcon.spriteFrame = data.icon;
   }
 
   select() {

@@ -13,6 +13,10 @@ export class FillPanel extends Component {
   public init(currentAmount: number, maxAmount: number) {
     this.currentAmount = currentAmount;
     this.maxAmount = maxAmount;
+    this.updateFill();
+  }
+
+  protected updateFill() {
     this.fillSprite.fillRange = this.currentAmount / this.maxAmount;
   }
 }

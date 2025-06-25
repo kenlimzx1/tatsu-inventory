@@ -1,4 +1,4 @@
-import { _decorator, Component, Node } from 'cc';
+import { _decorator, Component, math, Node } from 'cc';
 import { GameItemDatabase } from '../gameItem/GameItemDatabase';
 import { StatsHealth } from '../stats/StatsHealth';
 import { StatsMana } from '../stats/StatsMana';
@@ -8,6 +8,7 @@ import { StatsIntelligent } from '../stats/StatsIntelligent';
 import { Stats } from '../stats/Stats';
 import { StatsBuilder, StatsCollection } from '../stats/StatsBuilder';
 import EventBus, { BaseEvent } from '../sys/eventBus/EventBus';
+import { EquipmentCategory } from '../gameItem/GameItem';
 const { ccclass, property } = _decorator;
 
 @ccclass('Character')
@@ -78,9 +79,8 @@ export class Character extends Component {
     this._currentMana = this._currentMaxMana.amount;
   }
 
-  public equip(equipItemId: string) {
-    const equipmentInfo = GameItemDatabase.instance.getEquipmentInfo(equipItemId);
-    switch (equipmentInfo!.category) {
+  public equip(equipItemId: string, category: EquipmentCategory) {
+    switch (category) {
       case "armour":
         this.equippedArmour = equipItemId;
         break;
@@ -97,31 +97,34 @@ export class Character extends Component {
     this.updateStats();
   }
 
-  public use(consumableItemId: string) {
+  public use(effect: string) {
+    const splits = effect.split(" ");
+    let amount = parseInt(splits[0].substring(1));
+    const notation = splits[0][1];
+    if (notation === "-")
+      amount = -amount;
 
+    switch (splits[1]) {
+      case "health":
+        this.addHealth(amount);
+        break;
+      case "mana":
+        this.addMana(amount);
+        break;
+      default:
+        throw new Error(`Unknown stat type: ${splits[1]}`);
+    }
   }
 
-  public hit(amount: number) {
+  public addHealth(amount: number) {
     const prevHealth = this._currentHealth;
-    this._currentHealth -= amount;
+    this._currentHealth = math.clamp(this.currentHealth + amount, 0, this.currentMaxHealth.amount);
     EventBus.publish(HealthStatsChangedEvent.EVENT_ID, new HealthStatsChangedEvent(prevHealth, this._currentHealth, this._currentMaxHealth.amount, this._currentMaxHealth.amount));
   }
 
-  public heal(amount: number) {
-    const prevHealth = this._currentHealth;
-    this._currentHealth += amount;
-    EventBus.publish(HealthStatsChangedEvent.EVENT_ID, new HealthStatsChangedEvent(prevHealth, this._currentHealth, this._currentMaxHealth.amount, this._currentMaxHealth.amount));
-  }
-
-  public useMana(amount: number) {
+  public addMana(amount: number) {
     const prevMana = this._currentMana;
-    this._currentMana -= amount;
-    EventBus.publish(ManaStatsChangedEvent.EVENT_ID, new ManaStatsChangedEvent(prevMana, this._currentMana, this._currentMaxMana.amount, this._currentMaxMana.amount));
-  }
-
-  public recoverMana(amount: number) {
-    const prevMana = this._currentMana;
-    this._currentMana += amount;
+    this._currentMana = math.clamp(this._currentMana + amount, 0, this.currentMaxMana.amount);
     EventBus.publish(ManaStatsChangedEvent.EVENT_ID, new ManaStatsChangedEvent(prevMana, this._currentMana, this._currentMaxMana.amount, this._currentMaxMana.amount));
   }
 

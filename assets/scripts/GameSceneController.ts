@@ -42,11 +42,11 @@ export class GameSceneController extends Component {
   }
 
   hit() {
-    this.character.hit(20);
+    this.character.addHealth(-20);
   }
 
   spell() {
-    this.character.useMana(20);
+    this.character.addMana(-20);
   }
 }
 

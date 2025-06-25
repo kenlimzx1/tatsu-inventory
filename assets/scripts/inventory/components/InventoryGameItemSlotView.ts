@@ -33,7 +33,7 @@ export class InventoryGameItemSlotView extends Component {
 
   private data: InventoryGameItemSlotViewData | null = null;
 
-  public isEmpty(): boolean {
+  public get isEmpty(): boolean {
     return !this.data?.gameItem;
   }
 
@@ -45,14 +45,12 @@ export class InventoryGameItemSlotView extends Component {
 
   init(data: InventoryGameItemSlotViewData) {
     this.data = data;
-    const isEmpty = !data.gameItem;
-    this.emptySlotIndicator.active = isEmpty;
-    this.itemIcon.node.active = !isEmpty;
-    this.quantityLabel.node.active = !isEmpty && data.quantity > 1;
-    if (!isEmpty) {
+    this.emptySlotIndicator.active = this.isEmpty;
+    this.itemIcon.node.active = !this.isEmpty;
+    if (!this.isEmpty) {
       this.itemIcon.spriteFrame = data.icon;
-      if (data.quantity > 1) this.quantityLabel.string = data.quantity.toString();
     }
+    this.updateQuantityLabel();
   }
 
   select() {
@@ -80,5 +78,15 @@ export class InventoryGameItemSlotView extends Component {
 
   unHover() {
     this.data?.onUnHover(this.data.index);
+  }
+
+  changeQuantity(updatedQuantity: number) {
+    this.data!.quantity = updatedQuantity;
+    this.updateQuantityLabel();
+  }
+
+  private updateQuantityLabel() {
+    this.quantityLabel.node.active = !this.isEmpty && this.data!.quantity > 1;
+    this.quantityLabel.string = this.data!.quantity.toString();
   }
 }

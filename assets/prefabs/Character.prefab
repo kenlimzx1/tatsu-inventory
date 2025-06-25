@@ -923,24 +923,6 @@
     "fileId": "49ArP+J6pN57am+QihlMZh"
   },
   {
-    "__type__": "ca1caGnvZpKq5aubIxgb0Nx",
-    "_name": "",
-    "_objFlags": 0,
-    "__editorExtras__": {},
-    "node": {
-      "__id__": 1
-    },
-    "_enabled": true,
-    "__prefab": {
-      "__id__": 41
-    },
-    "_id": ""
-  },
-  {
-    "__type__": "cc.CompPrefabInfo",
-    "fileId": "57Wa1FaMNAn5vzcK+ajgxq"
-  },
-  {
     "__type__": "cc.Animation",
     "_name": "",
     "_objFlags": 0,
@@ -950,7 +932,7 @@
     },
     "_enabled": true,
     "__prefab": {
-      "__id__": 43
+      "__id__": 41
     },
     "playOnLoad": true,
     "_clips": [
@@ -970,6 +952,33 @@
     "fileId": "73pP9EOgVJvqGfoYZCcIH4"
   },
   {
+    "__type__": "ca1caGnvZpKq5aubIxgb0Nx",
+    "_name": "",
+    "_objFlags": 0,
+    "__editorExtras__": {},
+    "node": {
+      "__id__": 1
+    },
+    "_enabled": true,
+    "__prefab": {
+      "__id__": 43
+    },
+    "baseHealth": 100,
+    "baseMana": 100,
+    "baseStr": 10,
+    "baseAgi": 10,
+    "baseInt": 10,
+    "helmet": "",
+    "armour": "",
+    "boots": "",
+    "weapon": "",
+    "_id": ""
+  },
+  {
+    "__type__": "cc.CompPrefabInfo",
+    "fileId": "fc13uFW6lNdrUZnH8u6GFx"
+  },
+  {
     "__type__": "cc.PrefabInfo",
     "root": {
       "__id__": 1
@@ -978,6 +987,7 @@
       "__id__": 0
     },
     "fileId": "b3w2+LQRVOxIsVkM2SHdM0",
+    "instance": null,
     "targetOverrides": null
   }
 ]

@@ -11,7 +11,7 @@ export class InventorySlot {
   public quantity: number = 0;
 
   public isEmpty(): boolean {
-    return this.itemId === null || this.quantity <= 0;
+    return this.itemId === "" || this.quantity <= 0;
   }
 
   public setItem(itemId: string, quantity: number): void {

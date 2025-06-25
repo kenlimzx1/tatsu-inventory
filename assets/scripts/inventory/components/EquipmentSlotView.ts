@@ -1,24 +1,16 @@
-import { _decorator, Button, Component, EventTouch, Label, Node, Sprite, SpriteFrame, tween, Tween, Vec3 } from 'cc';
-import { EquipmentCategory, GameItem } from '../../gameItem/GameItem';
+import { _decorator, Button, Component, EventTouch, Node, Sprite, SpriteFrame, tween, Tween, Vec3 } from 'cc';
+import { GameItem } from '../../gameItem/GameItem';
 const { ccclass, property } = _decorator;
 
 export class EquipmentSlotViewData {
-  public category: EquipmentCategory;
-  public gameItem: GameItem | null;
-  public icon: SpriteFrame | null;
-  public quantity: number = 0;
-  public onSelect: (category: EquipmentCategory) => void;
-  public onHover: (category: EquipmentCategory) => void;
-  public onUnHover: (category: EquipmentCategory) => void;
-
-  constructor(category: EquipmentCategory, gameItem: GameItem | null, icon: SpriteFrame | null, onSelect: (category: EquipmentCategory) => void, onHover: (category: EquipmentCategory) => void = () => { }, onUnHover: (category: EquipmentCategory) => void = () => { }) {
-    this.category = category;
-    this.gameItem = gameItem;
-    this.icon = icon;
-    this.onSelect = onSelect;
-    this.onHover = onHover;
-    this.onUnHover = onUnHover;
-  }
+  constructor(
+    public index: number,
+    public gameItem: GameItem | null,
+    public icon: SpriteFrame | null,
+    public onSelect: (index: number) => void,
+    public onHover: (index: number) => void = () => { },
+    public onUnHover: (index: number) => void = () => { }
+  ) { }
 }
 
 @ccclass('EquipmentSlotView')
@@ -36,40 +28,39 @@ export class EquipmentSlotView extends Component {
   @property(Node)
   private selectedIndicator: Node = null!;
 
-  private category: EquipmentCategory = "armour";
-
+  private index = -1;
   private data: EquipmentSlotViewData | null = null;
 
+  public isEmpty(): boolean {
+    return !this.data?.gameItem;
+  }
+
   protected start(): void {
-    this.button.node.on(Node.EventType.MOUSE_ENTER, (event: EventTouch) => this.hover(event as EventTouch));
-    this.button.node.on(Node.EventType.MOUSE_LEAVE, (event: EventTouch) => this.unHover(event as EventTouch));
+    this.button.node.on(Node.EventType.MOUSE_ENTER, this.hover, this);
+    this.button.node.on(Node.EventType.MOUSE_LEAVE, this.unHover, this);
     this.hideSelectedIndicator();
   }
 
   init(data: EquipmentSlotViewData) {
     this.data = data;
-    this.category = data.category;
-    if (data.gameItem === null) {
-      this.emptySlotIndicator.active = true;
-      this.itemIcon.node.active = false;
-    } else {
-      this.itemIcon.node.active = true;
-      this.itemIcon.spriteFrame = data.icon;
-      this.emptySlotIndicator.active = false;
-    }
+    this.index = data.index;
+    const hasItem = !!data.gameItem;
+    this.emptySlotIndicator.active = !hasItem;
+    this.itemIcon.node.active = hasItem;
+    if (hasItem) this.itemIcon.spriteFrame = data.icon;
   }
 
   select() {
-    this.data!.onSelect(this.category);
+    this.data?.onSelect(this.index);
   }
 
   showSelectedIndicator() {
     Tween.stopAllByTarget(this.selectedIndicator);
     this.selectedIndicator.active = true;
-    this.selectedIndicator.setScale(new Vec3(1, 1, 1));
+    this.selectedIndicator.setScale(Vec3.ONE);
     tween(this.selectedIndicator)
-      .to(0.2, { scale: new Vec3(.9, .9, 1) })
-      .to(0.2, { scale: new Vec3(1, 1, 1) })
+      .to(0.2, { scale: new Vec3(0.9, 0.9, 1) })
+      .to(0.2, { scale: Vec3.ONE })
       .start();
   }
 
@@ -78,13 +69,11 @@ export class EquipmentSlotView extends Component {
     this.selectedIndicator.active = false;
   }
 
-  hover(event: EventTouch) {
-    this.data!.onHover(this.category);
+  hover() {
+    this.data?.onHover(this.index);
   }
 
-  unHover(event: EventTouch) {
-    this.data!.onUnHover(this.category);
+  unHover() {
+    this.data?.onUnHover(this.index);
   }
 }
-
-

@@ -1,4 +1,4 @@
-import { _decorator, Component, instantiate, Label, Node, Prefab, SpriteFrame, Tween, tween, Vec3 } from 'cc';
+import { _decorator, Component, instantiate, Label, Node, Prefab, Sprite, SpriteFrame, Tween, tween, Vec3 } from 'cc';
 import { InventoryManager } from '../InventoryManager';
 import { InventoryGameItemSlotView, InventoryGameItemSlotViewData } from './InventoryGameItemSlotView';
 import { GameItemDatabase } from '../../gameItem/GameItemDatabase';
@@ -157,16 +157,15 @@ export class InventoryView extends Component {
         this.itemSlots[this.selectedItemIndex].hideSelectedIndicator();
         this.selectedItemIndex = -1;
       } else {
-        if (this.itemSlots[this.selectedItemIndex].isEmpty()) {
-          if (this.selectedItemIndex !== -1)
-            this.itemSlots[this.selectedItemIndex].hideSelectedIndicator();
+        if (this.selectedItemIndex === -1) {
           this.selectedItemIndex = index;
           this.itemSlots[this.selectedItemIndex].showSelectedIndicator();
         } else {
-          this.switchItemSlotPosition(this.selectedItemIndex, index);
-          this.itemSlots[index].hideSelectedIndicator();
-          this.itemSlots[this.selectedItemIndex].showSelectedIndicator();
-          this.selectedItemIndex = index;
+          if (!this.itemSlots[index].isEmpty() || !this.itemSlots[this.selectedItemIndex].isEmpty()) {
+            this.switchItemSlotPosition(this.selectedItemIndex, index);
+          }
+          this.itemSlots[this.selectedItemIndex].hideSelectedIndicator();
+          this.selectedItemIndex = -1;
         }
       }
       this.selectedEquipmentIndex = -1;
@@ -174,9 +173,6 @@ export class InventoryView extends Component {
   }
 
   private switchItemSlotPosition(from: number, to: number) {
-    if (from < 0 || to < 0 || from >= this.itemSlots.length || to >= this.itemSlots.length)
-      return;
-
     const fromSlot = this.inventoryManager.getSlot(from, this.currentTab)!;
     const toSlot = this.inventoryManager.getSlot(to, this.currentTab)!;
     const tempSlot = new InventorySlot();
@@ -192,18 +188,32 @@ export class InventoryView extends Component {
     else
       toSlot.setItem(tempSlot.itemId, tempSlot.quantity);
 
+    let fromInfo: GameItem | null = null;
+    let fromSprite: SpriteFrame | null = null;
+    let toInfo: GameItem | null = null;
+    let toSprite: SpriteFrame | null = null;
+
+    if (!fromSlot.isEmpty()) {
+      fromInfo = (this.currentTab === "consumable") ?
+        GameItemDatabase.instance.getConsumableInfo(fromSlot.itemId)! :
+        GameItemDatabase.instance.getEquipmentInfo(fromSlot.itemId)!;
+      fromSprite = GameItemDatabase.instance.getImage(fromInfo!.icon);
+    }
+    if (!toSlot.isEmpty()) {
+      toInfo = (this.currentTab === "consumable") ?
+        GameItemDatabase.instance.getConsumableInfo(toSlot.itemId)! :
+        GameItemDatabase.instance.getEquipmentInfo(toSlot.itemId)!;
+      toSprite = GameItemDatabase.instance.getImage(toInfo!.icon);
+    }
+
     this.itemSlots[from].init(new InventoryGameItemSlotViewData(
-      from, GameItemDatabase.instance.getConsumableInfo(fromSlot.itemId),
-      GameItemDatabase.instance.getImage(GameItemDatabase.instance.getConsumableInfo(fromSlot.itemId)!.icon)!,
-      fromSlot.quantity,
+      from, fromInfo, fromSprite, fromSlot.quantity,
       (i) => this.selectItem(i),
       (i) => this.hoverItem(i),
       (i) => this.unHoverItem(i)
     ));
     this.itemSlots[to].init(new InventoryGameItemSlotViewData(
-      to, GameItemDatabase.instance.getConsumableInfo(toSlot.itemId),
-      GameItemDatabase.instance.getImage(GameItemDatabase.instance.getConsumableInfo(toSlot.itemId)!.icon)!,
-      toSlot.quantity,
+      to, toInfo, toSprite, toSlot.quantity,
       (i) => this.selectItem(i),
       (i) => this.hoverItem(i),
       (i) => this.unHoverItem(i)

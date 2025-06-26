@@ -8,16 +8,10 @@ export class InitSceneController extends Component {
   @property(Label)
   private loadingLabel: Label = null!;
 
-  @property(Sprite)
-  private spr: Sprite = null!;
-
   async start() {
     console.log("InitSceneController start");
 
     await this.loadDatabase();
-
-    const img = GameItemDatabase.instance.getImage("light_vest");
-    this.spr.spriteFrame = img;
 
     this.scheduleOnce(() => {
       this.loadNextScene();

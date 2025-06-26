@@ -10,13 +10,18 @@ export class InventorySlot {
   @property({ type: CCInteger })
   public quantity: number = 0;
 
-  public isEmpty(): boolean {
+  public get isEmpty(): boolean {
     return this.itemId === "" || this.quantity <= 0;
   }
 
   public setItem(itemId: string, quantity: number): void {
     this.itemId = itemId;
     this.quantity = quantity;
+  }
+
+  public clear(): void {
+    this.itemId = "";
+    this.quantity = 0;
   }
 }
 

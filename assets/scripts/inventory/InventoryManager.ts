@@ -42,9 +42,9 @@ export class InventoryManager extends Component {
 
   public findFirstEmptySlot(type: GameItemType): number {
     if (type === "equipment") {
-      return this.currentEquipmentSlots.findIndex(slot => slot.isEmpty());
+      return this.currentEquipmentSlots.findIndex(slot => slot.isEmpty);
     } else if (type === "consumable") {
-      return this.currentConsumableSlots.findIndex(slot => slot.isEmpty());
+      return this.currentConsumableSlots.findIndex(slot => slot.isEmpty);
     }
     return -1;
   }

@@ -109,7 +109,7 @@ export class GameItemDatabase extends Component {
     return this._equipments.get(id) || null;
   }
 
-  public getImage(id: string): SpriteFrame | null {
+  public getIcon(id: string): SpriteFrame | null {
     return this._images.get(id) || null;
   }
 }

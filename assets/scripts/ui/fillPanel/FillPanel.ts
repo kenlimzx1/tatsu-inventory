@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Sprite } from 'cc';
+import { _decorator, Component, Node, Sprite, Tween, tween } from 'cc';
 import EventBus from '../../sys/eventBus/EventBus';
 const { ccclass, property } = _decorator;
 
@@ -13,11 +13,21 @@ export class FillPanel extends Component {
   public init(currentAmount: number, maxAmount: number) {
     this.currentAmount = currentAmount;
     this.maxAmount = maxAmount;
-    this.updateFill();
+    this.updateFill(false);
   }
 
-  protected updateFill() {
-    this.fillSprite.fillRange = this.currentAmount / this.maxAmount;
+  protected updateFill(useAnimation: boolean = true) {
+    Tween.stopAllByTarget(this.fillSprite);
+    if (useAnimation) {
+      const target = this.currentAmount / this.maxAmount;
+      const current = this.fillSprite.fillRange;
+      const duration = Math.abs(target - current) / 1; // 1 second
+      tween(this.fillSprite)
+        .to(duration, { fillRange: target })
+        .start();
+    } else {
+      this.fillSprite.fillRange = this.currentAmount / this.maxAmount;
+    }
   }
 }
 

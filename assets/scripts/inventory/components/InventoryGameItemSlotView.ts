@@ -1,18 +1,20 @@
-import { _decorator, Button, Component, EventTouch, Label, Node, Sprite, SpriteFrame, Tween, tween, Vec3 } from 'cc';
+import { _decorator, Button, Component, Input, Label, Node, Size, Sprite, SpriteFrame, Tween, tween, UITransform, Vec2, Vec3 } from 'cc';
 import { GameItem } from '../../gameItem/GameItem';
+import { FitToBox2D } from '../../utils/FitToBox2D';
 const { ccclass, property } = _decorator;
 
 export class InventoryGameItemSlotViewData {
-  constructor(
-    public index: number,
-    public gameItem: GameItem | null,
-    public icon: SpriteFrame | null,
-    public quantity: number = 0,
-    public itemCategoryIcon: SpriteFrame | null,
-    public onSelect: (index: number) => void = () => { },
-    public onHover: (index: number) => void = () => { },
-    public onUnHover: (index: number) => void = () => { }
-  ) { }
+  public gameItem: GameItem;
+  public icon: SpriteFrame;
+  public quantity: number = 0;
+  public categoryIcon: SpriteFrame;
+
+  constructor(gameItem: GameItem, icon: SpriteFrame, quantity: number = 0, categoryIcon: SpriteFrame) {
+    this.gameItem = gameItem;
+    this.icon = icon;
+    this.quantity = quantity;
+    this.categoryIcon = categoryIcon;
+  }
 }
 
 @ccclass('InventoryGameItemSlotView')
@@ -33,37 +35,83 @@ export class InventoryGameItemSlotView extends Component {
   private selectedIndicator: Node = null!;
 
   @property(Sprite)
-  private categorySprite: Sprite = null!;
+  private categoryIcon: Sprite = null!;
 
+  private index: number = -1;
   private data: InventoryGameItemSlotViewData | null = null;
+  private onSelected: (index: number) => void = null!;
+  private onHovered: (index: number) => void = null!;
+  private onUnhovered: (index: number) => void = null!;
+
+  private categoryIconReferenceSize: Size = new Size(40, 40);
+  private iconReferenceSize: Size = new Size(120, 120);
 
   public get isEmpty(): boolean {
-    return !this.data?.gameItem;
+    return this.data === null;
   }
 
   protected start(): void {
     this.button.node.on(Node.EventType.MOUSE_ENTER, this.hover, this);
-    this.button.node.on(Node.EventType.MOUSE_LEAVE, this.unHover, this);
+    this.button.node.on(Node.EventType.MOUSE_LEAVE, this.unhover, this);
+    this.node.on(Input.EventType.TOUCH_START, this.hover, this);
+    this.node.on(Input.EventType.TOUCH_CANCEL, this.unhover, this);
     this.hideSelectedIndicator();
   }
 
-  init(data: InventoryGameItemSlotViewData) {
+  public init(
+    index: number,
+    onSelected: (index: number) => void,
+    onHovered: (index: number) => void,
+    onUnhovered: (index: number) => void
+  ) {
+    this.index = index;
+    this.onSelected = onSelected;
+    this.onHovered = onHovered;
+    this.onUnhovered = onUnhovered;
+  }
+
+  public updateData(data: InventoryGameItemSlotViewData | null) {
     this.data = data;
-    this.emptySlotIndicator.active = this.isEmpty;
-    this.itemIcon.node.active = !this.isEmpty;
-    this.categorySprite.node.active = !this.isEmpty;
-    if (!this.isEmpty) {
-      this.itemIcon.spriteFrame = data.icon;
-      this.categorySprite.spriteFrame = data.itemCategoryIcon;
+    if (this.isEmpty) {
+      this.emptySlotIndicator.active = true;
+      this.itemIcon.node.active = false;
+      this.categoryIcon.node.active = false;
+    } else {
+      this.emptySlotIndicator.active = false;
+      this.itemIcon.node.active = true;
+      this.itemIcon.spriteFrame = data!.icon;
+
+      const itemIconReferenceSize: Size = FitToBox2D.fitToBox2D(data!.icon.originalSize, this.iconReferenceSize);
+      const itemIconTransform = this.itemIcon.getComponent(UITransform)!;
+      itemIconTransform.width = itemIconReferenceSize.width;
+      itemIconTransform.height = itemIconReferenceSize.height;
+
+      this.categoryIcon.node.active = true;
+      this.categoryIcon.spriteFrame = data!.categoryIcon;
+
+      const categoryIconReferenceSize: Size = FitToBox2D.fitToBox2D(data!.categoryIcon.originalSize, this.categoryIconReferenceSize);
+      const categoryIconTransform = this.categoryIcon.getComponent(UITransform)!;
+      categoryIconTransform.width = categoryIconReferenceSize.width;
+      categoryIconTransform.height = categoryIconReferenceSize.height;
     }
     this.updateQuantityLabel();
   }
 
-  select() {
-    this.data?.onSelect(this.data.index);
+  public select() {
+    this.onSelected(this.index);
   }
 
-  showSelectedIndicator() {
+  private updateQuantityLabel() {
+    const showQuantity = !this.isEmpty && this.data!.quantity > 1;
+    if (showQuantity) {
+      this.quantityLabel.node.active = true;
+      this.quantityLabel.string = this.data!.quantity.toString();
+    } else {
+      this.quantityLabel.node.active = false;
+    }
+  }
+
+  public showSelectedIndicator() {
     Tween.stopAllByTarget(this.selectedIndicator);
     this.selectedIndicator.active = true;
     this.selectedIndicator.setScale(Vec3.ONE);
@@ -73,26 +121,16 @@ export class InventoryGameItemSlotView extends Component {
       .start();
   }
 
-  hideSelectedIndicator() {
+  public hideSelectedIndicator() {
     Tween.stopAllByTarget(this.selectedIndicator);
     this.selectedIndicator.active = false;
   }
 
-  hover() {
-    this.data?.onHover(this.data.index);
+  private hover() {
+    this.onHovered(this.index);
   }
 
-  unHover() {
-    this.data?.onUnHover(this.data.index);
-  }
-
-  changeQuantity(updatedQuantity: number) {
-    this.data!.quantity = updatedQuantity;
-    this.updateQuantityLabel();
-  }
-
-  private updateQuantityLabel() {
-    this.quantityLabel.node.active = !this.isEmpty && this.data!.quantity > 1;
-    this.quantityLabel.string = this.data!.quantity.toString();
+  private unhover() {
+    this.onUnhovered(this.index);
   }
 }

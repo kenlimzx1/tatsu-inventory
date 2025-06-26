@@ -3,15 +3,13 @@ import { GameItem } from '../../gameItem/GameItem';
 const { ccclass, property } = _decorator;
 
 export class EquipmentSlotViewData {
-  constructor(
-    public index: number,
-    public gameItem: GameItem | null,
-    public icon: SpriteFrame | null,
-    public equipCategoryIcon: SpriteFrame | null,
-    public onSelect: (index: number) => void,
-    public onHover: (index: number) => void = () => { },
-    public onUnHover: (index: number) => void = () => { }
-  ) { }
+  public gameItem: GameItem;
+  public icon: SpriteFrame;
+
+  constructor(gameItem: GameItem, icon: SpriteFrame) {
+    this.gameItem = gameItem;
+    this.icon = icon;
+  }
 }
 
 @ccclass('EquipmentSlotView')
@@ -30,13 +28,16 @@ export class EquipmentSlotView extends Component {
   private selectedIndicator: Node = null!;
 
   @property(Sprite)
-  private categorySprite: Sprite = null!;
+  private categoryIcon: Sprite = null!;
 
-  private index = -1;
+  private index: number = -1;
   private data: EquipmentSlotViewData | null = null;
+  private onSelected: (index: number) => void = null!;
+  private onHovered: (index: number) => void = null!;
+  private onUnhovered: (index: number) => void = null!;
 
   public get isEmpty(): boolean {
-    return !this.data?.gameItem;
+    return this.data === null;
   }
 
   protected start(): void {
@@ -45,20 +46,44 @@ export class EquipmentSlotView extends Component {
     this.hideSelectedIndicator();
   }
 
-  init(data: EquipmentSlotViewData) {
+  public init(
+    index: number,
+    equipmentCategoryIcon: SpriteFrame,
+    onSelected: (index: number) => void,
+    onHovered: (index: number) => void,
+    onUnhovered: (index: number) => void
+  ) {
+    this.index = index;
+    this.categoryIcon.node.active = true;
+    this.categoryIcon.spriteFrame = equipmentCategoryIcon;
+    this.onSelected = onSelected;
+    this.onHovered = onHovered;
+    this.onUnhovered = onUnhovered;
+  }
+
+  public updateData(data: EquipmentSlotViewData | null, useAnimation: boolean = true) {
     this.data = data;
-    this.index = data.index;
-    this.emptySlotIndicator.active = this.isEmpty;
-    this.itemIcon.node.active = !this.isEmpty;
-    this.categorySprite.node.active = true;
-    this.categorySprite.spriteFrame = data.equipCategoryIcon;
-    if (!this.isEmpty) {
-      this.itemIcon.spriteFrame = data.icon;
+    Tween.stopAllByTarget(this.node);
+    this.node.scale = new Vec3(1, 1, 1);
+    if (this.isEmpty) {
+      this.emptySlotIndicator.active = true;
+      this.itemIcon.node.active = false;
+    } else {
+      this.emptySlotIndicator.active = false;
+      this.itemIcon.node.active = true;
+      this.itemIcon.spriteFrame = data!.icon;
+      if (useAnimation) {
+        tween(this.node)
+          .to(.1, { scale: new Vec3(.9, .9, .9) })
+          .to(.1, { scale: new Vec3(1.1, 1.1, 1.1) })
+          .to(.05, { scale: new Vec3(1, 1, 1) })
+          .start();
+      }
     }
   }
 
   select() {
-    this.data?.onSelect(this.index);
+    this.onSelected(this.index);
   }
 
   showSelectedIndicator() {
@@ -77,10 +102,10 @@ export class EquipmentSlotView extends Component {
   }
 
   hover() {
-    this.data?.onHover(this.index);
+    this.onHovered(this.index);
   }
 
   unHover() {
-    this.data?.onUnHover(this.index);
+    this.onUnhovered(this.index);
   }
 }

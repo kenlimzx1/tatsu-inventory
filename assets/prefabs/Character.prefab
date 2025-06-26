@@ -963,15 +963,15 @@
     "__prefab": {
       "__id__": 43
     },
-    "baseHealth": 100,
-    "baseMana": 100,
+    "baseMaxHealth": 0,
+    "baseMaxMana": 0,
     "baseStr": 10,
     "baseAgi": 10,
     "baseInt": 10,
-    "helmet": "",
-    "armour": "",
-    "boots": "",
-    "weapon": "",
+    "equippedHelmet": "",
+    "equippedArmour": "",
+    "equippedBoots": "",
+    "equippedWeapon": "ewa001_axe",
     "_id": ""
   },
   {

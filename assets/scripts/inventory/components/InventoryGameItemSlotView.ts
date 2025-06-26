@@ -1,4 +1,4 @@
-import { _decorator, Button, Component, Label, Node, Sprite, SpriteFrame, Tween, tween, Vec3 } from 'cc';
+import { _decorator, Button, Component, Input, Label, Node, Sprite, SpriteFrame, Tween, tween, Vec3 } from 'cc';
 import { GameItem } from '../../gameItem/GameItem';
 const { ccclass, property } = _decorator;
 
@@ -6,13 +6,13 @@ export class InventoryGameItemSlotViewData {
   public gameItem: GameItem;
   public icon: SpriteFrame;
   public quantity: number = 0;
-  public itemCategoryIcon: SpriteFrame;
+  public categoryIcon: SpriteFrame;
 
-  constructor(gameItem: GameItem, icon: SpriteFrame, quantity: number = 0, itemCategoryIcon: SpriteFrame) {
+  constructor(gameItem: GameItem, icon: SpriteFrame, quantity: number = 0, categoryIcon: SpriteFrame) {
     this.gameItem = gameItem;
     this.icon = icon;
     this.quantity = quantity;
-    this.itemCategoryIcon = itemCategoryIcon;
+    this.categoryIcon = categoryIcon;
   }
 }
 
@@ -34,14 +34,13 @@ export class InventoryGameItemSlotView extends Component {
   private selectedIndicator: Node = null!;
 
   @property(Sprite)
-  private categorySprite: Sprite = null!;
+  private categoryIcon: Sprite = null!;
 
-  private data: InventoryGameItemSlotViewData | null = null;
-
-  private onSelect: (index: number) => void = null!;
-  private onHover: (index: number) => void = null!;
-  private onUnhover: (index: number) => void = null!;
   private index: number = -1;
+  private data: InventoryGameItemSlotViewData | null = null;
+  private onSelected: (index: number) => void = null!;
+  private onHovered: (index: number) => void = null!;
+  private onUnhovered: (index: number) => void = null!;
 
   public get isEmpty(): boolean {
     return this.data === null;
@@ -50,14 +49,41 @@ export class InventoryGameItemSlotView extends Component {
   protected start(): void {
     this.button.node.on(Node.EventType.MOUSE_ENTER, this.hover, this);
     this.button.node.on(Node.EventType.MOUSE_LEAVE, this.unhover, this);
+    this.node.on(Input.EventType.TOUCH_START, this.hover, this);
+    this.node.on(Input.EventType.TOUCH_CANCEL, this.unhover, this);
     this.hideSelectedIndicator();
   }
 
-  public init(index: number, onSelected: (index: number) => void, onHovered: (index: number) => void, onUnhovered: (index: number) => void) {
+  public init(
+    index: number,
+    onSelected: (index: number) => void,
+    onHovered: (index: number) => void,
+    onUnhovered: (index: number) => void
+  ) {
     this.index = index;
-    this.onSelect = onSelected;
-    this.onHover = onHovered;
-    this.onUnhover = onUnhovered;
+    this.onSelected = onSelected;
+    this.onHovered = onHovered;
+    this.onUnhovered = onUnhovered;
+  }
+
+  public updateData(data: InventoryGameItemSlotViewData | null) {
+    this.data = data;
+    if (this.isEmpty) {
+      this.emptySlotIndicator.active = true;
+      this.itemIcon.node.active = false;
+      this.categoryIcon.node.active = false;
+    } else {
+      this.emptySlotIndicator.active = false;
+      this.itemIcon.node.active = true;
+      this.itemIcon.spriteFrame = data!.icon;
+      this.categoryIcon.node.active = true;
+      this.categoryIcon.spriteFrame = data!.categoryIcon;
+    }
+    this.updateQuantityLabel();
+  }
+
+  public select() {
+    this.onSelected(this.index);
   }
 
   private updateQuantityLabel() {
@@ -68,25 +94,6 @@ export class InventoryGameItemSlotView extends Component {
     } else {
       this.quantityLabel.node.active = false;
     }
-  }
-
-  public updateData(data: InventoryGameItemSlotViewData | null) {
-    this.data = data;
-    if (this.isEmpty) {
-      this.emptySlotIndicator.active = true;
-      this.itemIcon.node.active = false;
-      this.categorySprite.node.active = false;
-    } else {
-      this.emptySlotIndicator.active = false;
-      this.itemIcon.node.active = true;
-      this.categorySprite.node.active = true;
-      this.itemIcon.spriteFrame = data!.icon;
-    }
-    this.updateQuantityLabel();
-  }
-
-  public select() {
-    this.onSelect(this.index);
   }
 
   public showSelectedIndicator() {
@@ -105,15 +112,10 @@ export class InventoryGameItemSlotView extends Component {
   }
 
   private hover() {
-    this.onHover(this.index);
+    this.onHovered(this.index);
   }
 
   private unhover() {
-    this.onUnhover(this.index);
-  }
-
-  public changeQuantity(updatedQuantity: number) {
-    this.data!.quantity = updatedQuantity;
-    this.updateQuantityLabel();
+    this.onUnhovered(this.index);
   }
 }

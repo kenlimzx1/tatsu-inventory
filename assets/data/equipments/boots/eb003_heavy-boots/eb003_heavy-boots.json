@@ -1,0 +1,11 @@
+{
+  "id": "eb003_heavy-boots",
+  "name": "Heavy Boots",
+  "description": "Thick iron-reinforced boots built for endurance and battlefield stability.",
+  "icon": "heavy_boots",
+  "type": "equipment",
+  "category": "boots",
+  "effects": [
+    "+20 AGI"
+  ]
+}

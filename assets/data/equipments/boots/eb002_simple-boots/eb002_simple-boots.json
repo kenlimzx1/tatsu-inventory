@@ -1,0 +1,11 @@
+{
+  "id": "eb002_simple-boots",
+  "name": "Simple Boots",
+  "description": "Plain leather boots offering modest comfort and durability.",
+  "icon": "simple_boots",
+  "type": "equipment",
+  "category": "boots",
+  "effects": [
+    "+15 AGI"
+  ]
+}

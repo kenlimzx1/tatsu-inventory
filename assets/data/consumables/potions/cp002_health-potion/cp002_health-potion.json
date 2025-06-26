@@ -1,0 +1,11 @@
+{
+  "id": "cp002_health-potion",
+  "name": "HP Potion",
+  "description": "Recover health by 20 points",
+  "icon": "hp_potion",
+  "type": "consumable",
+  "category": "potion",
+  "effects": [
+    "+20 health"
+  ]
+}

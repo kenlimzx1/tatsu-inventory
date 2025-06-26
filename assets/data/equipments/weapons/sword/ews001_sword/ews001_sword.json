@@ -1,0 +1,11 @@
+{
+  "id": "ews001_sword",
+  "name": "Sword",
+  "description": "A finely balanced steel blade, standard weapon of soldiers and adventurers.",
+  "icon": "sword",
+  "type": "equipment",
+  "category": "weapon",
+  "effects": [
+    "+5 STR"
+  ]
+}

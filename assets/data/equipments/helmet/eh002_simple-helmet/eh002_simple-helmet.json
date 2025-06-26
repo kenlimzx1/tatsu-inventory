@@ -1,0 +1,12 @@
+{
+  "id": "eh002_simple-helmet",
+  "name": "Simple Helmet",
+  "description": "A rounded iron cap offering standard protection for infantry.",
+  "icon": "simple_helmet",
+  "type": "equipment",
+  "category": "helmet",
+  "effects": [
+    "+20 INT",
+    "+3 AGI"
+  ]
+}

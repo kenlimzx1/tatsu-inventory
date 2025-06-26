@@ -1,0 +1,11 @@
+{
+  "id": "cp001_mana-potion",
+  "name": "MP Potion",
+  "description": "Recover mana by 20 points",
+  "icon": "mp_potion",
+  "type": "consumable",
+  "category": "potion",
+  "effects": [
+    "+20 mana"
+  ]
+}

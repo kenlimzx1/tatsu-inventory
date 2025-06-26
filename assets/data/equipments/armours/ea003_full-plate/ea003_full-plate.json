@@ -1,0 +1,13 @@
+{
+  "id": "ea003_full-plate",
+  "name": "Full Plate",
+  "description": "An intricately crafted suit of steel armor that covers the wearer entirely, offering maximum protection.",
+  "icon": "full_plate",
+  "type": "equipment",
+  "category": "armour",
+  "effects": [
+    "+20 STR",
+    "-5 AGI",
+    "+100 HP"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "id": "eh001_light-helmet",
+  "name": "Light Helmet",
+  "description": "A thin metal helmet designed to protect while maintaining visibility and lightness.",
+  "icon": "light_helmet",
+  "type": "equipment",
+  "category": "helmet",
+  "effects": [
+    "+10 STR",
+    "+1 AGI"
+  ]
+}

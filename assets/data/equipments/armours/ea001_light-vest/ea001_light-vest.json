@@ -1,0 +1,12 @@
+{
+  "id": "ea001_light-vest",
+  "name": "Light Vest",
+  "description": "A lightweight steel vest offering minimal protection but excellent mobility. ",
+  "icon": "light_vest",
+  "type": "equipment",
+  "category": "armour",
+  "effects": [
+    "+2 STR",
+    "+100 HP"
+  ]
+}

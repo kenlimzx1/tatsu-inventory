@@ -1,0 +1,11 @@
+{
+  "id": "eb001_light-boots",
+  "name": "Light Boots",
+  "description": "Leather boots enchanted for silent steps, favored by scouts and rogues.",
+  "icon": "light_boots",
+  "type": "equipment",
+  "category": "boots",
+  "effects": [
+    "+5 AGI"
+  ]
+}

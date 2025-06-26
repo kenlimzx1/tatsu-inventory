@@ -1,18 +1,19 @@
-import { _decorator, Button, Component, EventTouch, Label, Node, Sprite, SpriteFrame, Tween, tween, Vec3 } from 'cc';
+import { _decorator, Button, Component, Label, Node, Sprite, SpriteFrame, Tween, tween, Vec3 } from 'cc';
 import { GameItem } from '../../gameItem/GameItem';
 const { ccclass, property } = _decorator;
 
 export class InventoryGameItemSlotViewData {
-  constructor(
-    public index: number,
-    public gameItem: GameItem | null,
-    public icon: SpriteFrame | null,
-    public quantity: number = 0,
-    public itemCategoryIcon: SpriteFrame | null,
-    public onSelect: (index: number) => void = () => { },
-    public onHover: (index: number) => void = () => { },
-    public onUnHover: (index: number) => void = () => { }
-  ) { }
+  public gameItem: GameItem;
+  public icon: SpriteFrame;
+  public quantity: number = 0;
+  public itemCategoryIcon: SpriteFrame;
+
+  constructor(gameItem: GameItem, icon: SpriteFrame, quantity: number = 0, itemCategoryIcon: SpriteFrame) {
+    this.gameItem = gameItem;
+    this.icon = icon;
+    this.quantity = quantity;
+    this.itemCategoryIcon = itemCategoryIcon;
+  }
 }
 
 @ccclass('InventoryGameItemSlotView')
@@ -37,33 +38,58 @@ export class InventoryGameItemSlotView extends Component {
 
   private data: InventoryGameItemSlotViewData | null = null;
 
+  private onSelect: (index: number) => void = null!;
+  private onHover: (index: number) => void = null!;
+  private onUnhover: (index: number) => void = null!;
+  private index: number = -1;
+
   public get isEmpty(): boolean {
-    return !this.data?.gameItem;
+    return this.data === null;
   }
 
   protected start(): void {
     this.button.node.on(Node.EventType.MOUSE_ENTER, this.hover, this);
-    this.button.node.on(Node.EventType.MOUSE_LEAVE, this.unHover, this);
+    this.button.node.on(Node.EventType.MOUSE_LEAVE, this.unhover, this);
     this.hideSelectedIndicator();
   }
 
-  init(data: InventoryGameItemSlotViewData) {
+  public init(index: number, onSelected: (index: number) => void, onHovered: (index: number) => void, onUnhovered: (index: number) => void) {
+    this.index = index;
+    this.onSelect = onSelected;
+    this.onHover = onHovered;
+    this.onUnhover = onUnhovered;
+  }
+
+  private updateQuantityLabel() {
+    const showQuantity = !this.isEmpty && this.data!.quantity > 1;
+    if (showQuantity) {
+      this.quantityLabel.node.active = true;
+      this.quantityLabel.string = this.data!.quantity.toString();
+    } else {
+      this.quantityLabel.node.active = false;
+    }
+  }
+
+  public updateData(data: InventoryGameItemSlotViewData | null) {
     this.data = data;
-    this.emptySlotIndicator.active = this.isEmpty;
-    this.itemIcon.node.active = !this.isEmpty;
-    this.categorySprite.node.active = !this.isEmpty;
-    if (!this.isEmpty) {
-      this.itemIcon.spriteFrame = data.icon;
-      this.categorySprite.spriteFrame = data.itemCategoryIcon;
+    if (this.isEmpty) {
+      this.emptySlotIndicator.active = true;
+      this.itemIcon.node.active = false;
+      this.categorySprite.node.active = false;
+    } else {
+      this.emptySlotIndicator.active = false;
+      this.itemIcon.node.active = true;
+      this.categorySprite.node.active = true;
+      this.itemIcon.spriteFrame = data!.icon;
     }
     this.updateQuantityLabel();
   }
 
-  select() {
-    this.data?.onSelect(this.data.index);
+  public select() {
+    this.onSelect(this.index);
   }
 
-  showSelectedIndicator() {
+  public showSelectedIndicator() {
     Tween.stopAllByTarget(this.selectedIndicator);
     this.selectedIndicator.active = true;
     this.selectedIndicator.setScale(Vec3.ONE);
@@ -73,26 +99,21 @@ export class InventoryGameItemSlotView extends Component {
       .start();
   }
 
-  hideSelectedIndicator() {
+  public hideSelectedIndicator() {
     Tween.stopAllByTarget(this.selectedIndicator);
     this.selectedIndicator.active = false;
   }
 
-  hover() {
-    this.data?.onHover(this.data.index);
+  private hover() {
+    this.onHover(this.index);
   }
 
-  unHover() {
-    this.data?.onUnHover(this.data.index);
+  private unhover() {
+    this.onUnhover(this.index);
   }
 
-  changeQuantity(updatedQuantity: number) {
+  public changeQuantity(updatedQuantity: number) {
     this.data!.quantity = updatedQuantity;
     this.updateQuantityLabel();
-  }
-
-  private updateQuantityLabel() {
-    this.quantityLabel.node.active = !this.isEmpty && this.data!.quantity > 1;
-    this.quantityLabel.string = this.data!.quantity.toString();
   }
 }

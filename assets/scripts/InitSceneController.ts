@@ -16,7 +16,7 @@ export class InitSceneController extends Component {
 
     await this.loadDatabase();
 
-    const img = GameItemDatabase.instance.getImage("light_vest");
+    const img = GameItemDatabase.instance.getIcon("light_vest");
     this.spr.spriteFrame = img;
 
     this.scheduleOnce(() => {

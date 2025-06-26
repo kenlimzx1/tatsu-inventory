@@ -1,4 +1,4 @@
-import { _decorator, Component, instantiate, Label, Node, Prefab, Sprite, SpriteFrame, Tween, tween, Vec3 } from 'cc';
+import { _decorator, Component, game, instantiate, Label, Node, Prefab, Sprite, SpriteFrame, Tween, tween, Vec3 } from 'cc';
 import { InventoryManager } from '../InventoryManager';
 import { InventoryGameItemSlotView, InventoryGameItemSlotViewData } from './InventoryGameItemSlotView';
 import { GameItemDatabase } from '../../gameItem/GameItemDatabase';
@@ -72,7 +72,7 @@ export class InventoryView extends Component {
   @property(InventoryTooltipUI)
   private tooltip: InventoryTooltipUI = null!;
 
-  private itemSlots: InventoryGameItemSlotView[] = [];
+  private itemSlotViews: InventoryGameItemSlotView[] = [];
   private currentTab: InventoryTab = 'equipment';
   private selectedItemIndex = -1;
   private selectedEquipmentIndex = -1;
@@ -91,20 +91,18 @@ export class InventoryView extends Component {
     this.tooltip.node.active = false;
     this.updateStatusLabels();
     this.initEquipmentSlots();
-
   }
 
   private initEquipmentSlots() {
     const slots = [
-      { slot: this.weaponSlot, id: this.character.equippedWeapon, idx: 0, categoryIcon: this.getCategorySprite("weapon") },
-      { slot: this.helmetSlot, id: this.character.equippedHelmet, idx: 1, categoryIcon: this.getCategorySprite("helmet") },
-      { slot: this.armourSlot, id: this.character.equippedArmour, idx: 2, categoryIcon: this.getCategorySprite("armour") },
-      { slot: this.bootsSlot, id: this.character.equippedBoots, idx: 3, categoryIcon: this.getCategorySprite("boots") },
+      { slot: this.weaponSlot, id: this.character.equippedWeapon, idx: 0, categoryIcon: this.getCategoryIcon("weapon") },
+      { slot: this.helmetSlot, id: this.character.equippedHelmet, idx: 1, categoryIcon: this.getCategoryIcon("helmet") },
+      { slot: this.armourSlot, id: this.character.equippedArmour, idx: 2, categoryIcon: this.getCategoryIcon("armour") },
+      { slot: this.bootsSlot, id: this.character.equippedBoots, idx: 3, categoryIcon: this.getCategoryIcon("boots") },
     ];
-    slots.forEach(({ slot, id, idx }) => {
+    slots.forEach(({ slot, id, idx, categoryIcon }) => {
       const info = GameItemDatabase.instance.getEquipmentInfo(id);
-      const icon = info ? GameItemDatabase.instance.getImage(info.icon)! : null;
-      const categoryIcon = slots[idx].categoryIcon;
+      const icon = info ? GameItemDatabase.instance.getIcon(info.icon)! : null;
       slot.init(new EquipmentSlotViewData(
         idx, info, icon, categoryIcon,
         (i) => this.selectEquipSlot(i),
@@ -120,40 +118,67 @@ export class InventoryView extends Component {
       : this.inventoryManager.totalConsumablelots || 0;
     this.generateSlots(totalSlots);
     if (this.selectedItemIndex !== -1)
-      this.itemSlots[this.selectedItemIndex].hideSelectedIndicator();
+      this.itemSlotViews[this.selectedItemIndex].hideSelectedIndicator();
     this.selectedItemIndex = -1;
   }
 
   private generateSlots(totalSlots: number) {
-    while (this.itemSlots.length < totalSlots) {
+    while (this.itemSlotViews.length < totalSlots) {
       const slot = instantiate(this.inventorySlotPrefab).getComponent(InventoryGameItemSlotView)!;
       slot.node.parent = this.inventoryContent;
-      this.itemSlots.push(slot);
+      this.itemSlotViews.push(slot);
     }
-    while (this.itemSlots.length > totalSlots) {
-      this.itemSlots.pop()!.node.destroy();
+    while (this.itemSlotViews.length > totalSlots) {
+      this.itemSlotViews.pop()!.node.destroy();
     }
     this.inventoryContent.setPosition(0, 370, 0);
 
-    for (let i = 0; i < this.itemSlots.length; i++) {
-      const item = this.inventoryManager.getSlot(i, this.currentTab);
-      let gameItem: GameItem | null = null;
-      let sprite: SpriteFrame | null = null;
-      let categorySprite: SpriteFrame | null = null;
-      if (item && !item.isEmpty()) {
-        gameItem = this.currentTab === 'equipment'
-          ? GameItemDatabase.instance.getEquipmentInfo(item.itemId)!
-          : GameItemDatabase.instance.getConsumableInfo(item.itemId)!;
-        sprite = GameItemDatabase.instance.getImage(gameItem.icon)!;
-        categorySprite = this.getCategorySprite(gameItem.category);
-      }
-      this.itemSlots[i].init(new InventoryGameItemSlotViewData(
-        i, gameItem, sprite, item?.quantity ?? 0, categorySprite,
-        (idx) => this.selectItem(idx),
-        (idx) => this.hoverItem(idx),
-        (idx) => this.unHoverItem(idx)
-      ));
+    for (let i = 0; i < this.itemSlotViews.length; i++) {
+      const itemSlot = this.inventoryManager.getSlot(i, this.currentTab)!;
+      const itemSlotView = this.itemSlotViews[i];
+      itemSlotView.init(i, (idx) => this.selectItem(idx), (idx) => this.hoverItem(idx), (idx) => this.unHoverItem(idx));
+      this.updateInventorySlotView(itemSlotView, itemSlot);
     }
+  }
+
+  private updateInventorySlotView(itemSlotView: InventoryGameItemSlotView, inventorySlot: InventorySlot) {
+    let itemSlotViewData: InventoryGameItemSlotViewData | null = null;
+    if (inventorySlot && !inventorySlot.isEmpty) {
+      let gameItem: GameItem | null = null;
+      let icon: SpriteFrame | null = null;
+      let categoryIcon: SpriteFrame | null = null;
+      if (this.currentTab === "equipment")
+        gameItem = GameItemDatabase.instance.getEquipmentInfo(inventorySlot.itemId)!;
+      else
+        gameItem = GameItemDatabase.instance.getConsumableInfo(inventorySlot.itemId)!;
+      icon = GameItemDatabase.instance.getIcon(gameItem.icon)!;
+      categoryIcon = this.getCategoryIcon(gameItem.category)!;
+      itemSlotViewData = new InventoryGameItemSlotViewData(gameItem, icon, inventorySlot.quantity, categoryIcon);
+    }
+    itemSlotView.updateData(itemSlotViewData);
+  }
+
+  // private initInventorySlot(
+  //   index: number,
+  //   gameItem: GameItem | null,
+  //   sprite: SpriteFrame | null,
+  //   quantity: number,
+  //   categorySprite: SpriteFrame | null
+  // ) {
+  //   this.itemSlotViews[index].init(new InventoryGameItemSlotViewData(
+  //     index, gameItem, sprite, quantity, categorySprite,
+  //     (idx) => this.selectItem(idx),
+  //     (idx) => this.hoverItem(idx),
+  //     (idx) => this.unHoverItem(idx)
+  //   ));
+  // }
+
+  private updateInventorySlotBySlotIndex(index: number, slot: InventorySlot, gameItem: GameItem | null, sprite: SpriteFrame | null, categorySprite: SpriteFrame | null) {
+    this.initInventorySlot(index, gameItem, sprite, slot.quantity, categorySprite);
+  }
+
+  private clearInventorySlot(index: number) {
+    this.initInventorySlot(index, null, null, 0, null);
   }
 
   private selectItem(index: number) {
@@ -162,45 +187,45 @@ export class InventoryView extends Component {
       if (this.currentTab === "equipment") {
         const slot = this.inventoryManager.getSlot(index, "equipment")!;
         if (!equipmentSlot.isEmpty) {
-          if (slot.isEmpty()) {
+          if (slot.isEmpty) {
             this.unequip(this.selectedEquipmentIndex, index);
           } else {
             this.selectedItemIndex = index;
-            this.itemSlots[this.selectedItemIndex].showSelectedIndicator();
+            this.itemSlotViews[this.selectedItemIndex].showSelectedIndicator();
           }
         } else {
           this.selectedItemIndex = index;
-          this.itemSlots[this.selectedItemIndex].showSelectedIndicator();
+          this.itemSlotViews[this.selectedItemIndex].showSelectedIndicator();
         }
       } else {
         this.selectedItemIndex = index;
-        this.itemSlots[this.selectedItemIndex].showSelectedIndicator();
+        this.itemSlotViews[this.selectedItemIndex].showSelectedIndicator();
       }
       this.selectedEquipmentIndex = -1;
       equipmentSlot.hideSelectedIndicator();
     } else {
       if (this.selectedItemIndex === index) {
-        if (!this.itemSlots[this.selectedItemIndex].isEmpty) {
+        if (!this.itemSlotViews[this.selectedItemIndex].isEmpty) {
           if (this.currentTab === "equipment")
             this.equipItem()
           else
             this.useItem();
         }
-        this.itemSlots[this.selectedItemIndex].hideSelectedIndicator();
+        this.itemSlotViews[this.selectedItemIndex].hideSelectedIndicator();
         this.selectedItemIndex = -1;
       } else {
         if (this.selectedItemIndex === -1) {
           this.selectedItemIndex = index;
-          this.itemSlots[this.selectedItemIndex].showSelectedIndicator();
+          this.itemSlotViews[this.selectedItemIndex].showSelectedIndicator();
         } else {
-          if (!this.itemSlots[index].isEmpty || !this.itemSlots[this.selectedItemIndex].isEmpty) {
+          if (!this.itemSlotViews[index].isEmpty || !this.itemSlotViews[this.selectedItemIndex].isEmpty) {
             this.switchItemSlotPosition(this.selectedItemIndex, index);
-            this.itemSlots[this.selectedItemIndex].hideSelectedIndicator();
+            this.itemSlotViews[this.selectedItemIndex].hideSelectedIndicator();
             this.selectedItemIndex = -1;
           } else {
-            this.itemSlots[this.selectedItemIndex].hideSelectedIndicator();
+            this.itemSlotViews[this.selectedItemIndex].hideSelectedIndicator();
             this.selectedItemIndex = index;
-            this.itemSlots[this.selectedItemIndex].showSelectedIndicator();
+            this.itemSlotViews[this.selectedItemIndex].showSelectedIndicator();
           }
         }
       }
@@ -214,57 +239,39 @@ export class InventoryView extends Component {
     const tempSlot = new InventorySlot();
     tempSlot.setItem(fromSlot.itemId, fromSlot.quantity);
 
-    if (toSlot.isEmpty())
+    if (toSlot.isEmpty)
       fromSlot.setItem("", 0);
     else
       fromSlot.setItem(toSlot.itemId, toSlot.quantity);
 
-    if (tempSlot.isEmpty())
+    if (tempSlot.isEmpty)
       toSlot.setItem("", 0);
     else
       toSlot.setItem(tempSlot.itemId, tempSlot.quantity);
 
-    let fromInfo: GameItem | null = null;
-    let fromSprite: SpriteFrame | null = null;
-    let fromCategorySprite: SpriteFrame | null = null;
-    let toInfo: GameItem | null = null;
-    let toSprite: SpriteFrame | null = null;
-    let toCategorySprite: SpriteFrame | null = null;
+    this.refreshInventorySlot(from, fromSlot);
+    this.refreshInventorySlot(to, toSlot);
+  }
 
-    if (!fromSlot.isEmpty()) {
-      fromInfo = (this.currentTab === "consumable") ?
-        GameItemDatabase.instance.getConsumableInfo(fromSlot.itemId)! :
-        GameItemDatabase.instance.getEquipmentInfo(fromSlot.itemId)!;
-      fromSprite = GameItemDatabase.instance.getImage(fromInfo!.icon)!;
-      fromCategorySprite = this.getCategorySprite(fromInfo.category)!;
+  private refreshInventorySlot(index: number, slot: InventorySlot) {
+    let info: GameItem | null = null;
+    let sprite: SpriteFrame | null = null;
+    let categorySprite: SpriteFrame | null = null;
+    if (!slot.isEmpty) {
+      info = (this.currentTab === "consumable") ?
+        GameItemDatabase.instance.getConsumableInfo(slot.itemId)! :
+        GameItemDatabase.instance.getEquipmentInfo(slot.itemId)!;
+      sprite = GameItemDatabase.instance.getIcon(info.icon)!;
+      categorySprite = this.getCategoryIcon(info.category)!;
     }
-    if (!toSlot.isEmpty()) {
-      toInfo = (this.currentTab === "consumable") ?
-        GameItemDatabase.instance.getConsumableInfo(toSlot.itemId)! :
-        GameItemDatabase.instance.getEquipmentInfo(toSlot.itemId)!;
-      toSprite = GameItemDatabase.instance.getImage(toInfo!.icon)!;
-      toCategorySprite = this.getCategorySprite(toInfo.category)!;
-    }
-
-    this.itemSlots[from].init(new InventoryGameItemSlotViewData(
-      from, fromInfo, fromSprite, fromSlot.quantity, fromCategorySprite,
-      (i) => this.selectItem(i),
-      (i) => this.hoverItem(i),
-      (i) => this.unHoverItem(i)
-    ));
-    this.itemSlots[to].init(new InventoryGameItemSlotViewData(
-      to, toInfo, toSprite, toSlot.quantity, toCategorySprite,
-      (i) => this.selectItem(i),
-      (i) => this.hoverItem(i),
-      (i) => this.unHoverItem(i)
-    ));
+    this.updateInventorySlotBySlotIndex(index, slot, info, sprite, categorySprite);
   }
 
   private equipItem() {
     const slot = this.inventoryManager.getSlot(this.selectedItemIndex, "equipment")!;
     const infoToEquip = GameItemDatabase.instance.getEquipmentInfo(slot.itemId)!;
-    const iconToEquip = GameItemDatabase.instance.getImage(infoToEquip.icon)!;
-    const categoryIconToEquip = this.getCategorySprite(infoToEquip.category)!;
+    const iconToEquip = GameItemDatabase.instance.getIcon(infoToEquip.icon)!;
+    const categoryIconToEquip = this.getCategoryIcon(infoToEquip.category)!;
     let equipmentToPutBack = "";
     let slotView: EquipmentSlotView = null!;
     let equipmentIndex: number = -1;
@@ -279,31 +286,43 @@ export class InventoryView extends Component {
     if (equipmentToPutBack) {
       slot.setItem(equipmentToPutBack, 1);
       const infoToPutBack = GameItemDatabase.instance.getEquipmentInfo(equipmentToPutBack)!;
-      const iconToPutBack = GameItemDatabase.instance.getImage(infoToPutBack.icon)!;
-      const categoryIconToPutBack = this.getCategorySprite(infoToPutBack.category)!;
-      this.itemSlots[this.selectedItemIndex].init(new InventoryGameItemSlotViewData(
-        this.selectedItemIndex, infoToPutBack, iconToPutBack, 1, categoryIconToPutBack,
-        (i) => this.selectItem(i),
-        (i) => this.hoverItem(i),
-        (i) => this.unHoverItem(i)
-      ));
+      const iconToPutBack = GameItemDatabase.instance.getIcon(infoToPutBack.icon)!;
+      const categoryIconToPutBack = this.getCategoryIcon(infoToPutBack.category)!;
+      this.initInventorySlot(
+        this.selectedItemIndex,
+        infoToPutBack,
+        iconToPutBack,
+        1,
+        categoryIconToPutBack
+      );
     } else {
       slot.setItem("", 0);
-      this.itemSlots[this.selectedItemIndex].init(new InventoryGameItemSlotViewData(
-        this.selectedItemIndex, null, null, 0, null,
-        (i) => this.selectItem(i),
-        (i) => this.hoverItem(i),
-        (i) => this.unHoverItem(i)
-      ));
+      this.clearInventorySlot(this.selectedItemIndex);
     }
 
+    this.initEquipmentSlotView(
+      slotView,
+      equipmentIndex,
+      infoToEquip,
+      iconToEquip,
+      categoryIconToEquip
+    );
+    this.character.equip(infoToEquip.id, infoToEquip.category as EquipmentCategory);
+  }
+
+  private initEquipmentSlotView(
+    slotView: EquipmentSlotView,
+    equipmentIndex: number,
+    info: GameItem | null,
+    icon: SpriteFrame | null,
+    categoryIcon: SpriteFrame | null
+  ) {
     slotView.init(new EquipmentSlotViewData(
-      equipmentIndex, infoToEquip, iconToEquip, categoryIconToEquip,
+      equipmentIndex, info, icon, categoryIcon,
       (i) => this.selectEquipSlot(i),
       (i) => this.hoverEquipment(i),
       (i) => this.unHoverEquipment(i)
     ));
-    this.character.equip(infoToEquip.id, infoToEquip.category as EquipmentCategory);
   }
 
   private useItem() {
@@ -316,28 +335,23 @@ export class InventoryView extends Component {
     slot.quantity--;
     if (slot.quantity <= 0) {
       slot.setItem("", 0);
-      this.itemSlots[this.selectedItemIndex].init(new InventoryGameItemSlotViewData(
-        this.selectedItemIndex, null, null, 0, null,
-        (idx) => this.selectItem(idx),
-        (idx) => this.hoverItem(idx),
-        (idx) => this.unHoverItem(idx)
-      ))
+      this.clearInventorySlot(this.selectedItemIndex);
     } else {
-      this.itemSlots[this.selectedItemIndex].changeQuantity(slot!.quantity);
+      this.itemSlotViews[this.selectedItemIndex].changeQuantity(slot!.quantity);
     }
   }
 
   private hoverItem(index: number) {
     const slot = this.inventoryManager.getSlot(index, this.currentTab);
-    if (!slot || slot.isEmpty()) return;
+    if (!slot || slot.isEmpty) return;
     const gameItem = this.currentTab === 'equipment'
       ? GameItemDatabase.instance.getEquipmentInfo(slot.itemId)!
       : GameItemDatabase.instance.getConsumableInfo(slot.itemId)!;
-    const sprite = GameItemDatabase.instance.getImage(gameItem.icon)!;
+    const sprite = GameItemDatabase.instance.getIcon(gameItem.icon)!;
     const effectString = gameItem.effects.join('\n');
     const tooltipData = new InventoryTooltipUIData(gameItem.name, sprite, effectString, gameItem.description);
 
-    const pos = this.itemSlots[index].node.getWorldPosition();
+    const pos = this.itemSlotViews[index].node.getWorldPosition();
     const invPos: InventoryTooltipPosition =
       pos.y > 0 ? (index % 4 > 1 ? 'top-right' : 'top-left') : (index % 4 > 1 ? 'bottom-right' : 'bottom-left');
     this.tooltip.node.active = true;
@@ -366,7 +380,7 @@ export class InventoryView extends Component {
     } else {
       if (this.currentTab === "equipment") {
         const slot = this.inventoryManager.getSlot(this.selectedItemIndex, "equipment")!;
-        if (!slot.isEmpty()) {
+        if (!slot.isEmpty) {
           const category = GameItemDatabase.instance.getEquipmentInfo(slot.itemId)!.category;
           const canEquip = (
             (category === "weapon" && index === 0) ||
@@ -389,7 +403,7 @@ export class InventoryView extends Component {
         this.selectedEquipmentIndex = index;
         this.getEquipmentSlot(this.selectedEquipmentIndex)!.showSelectedIndicator();
       }
-      this.itemSlots[this.selectedItemIndex].hideSelectedIndicator();
+      this.itemSlotViews[this.selectedItemIndex].hideSelectedIndicator();
       this.selectedItemIndex = -1;
     }
   }
@@ -413,7 +427,7 @@ export class InventoryView extends Component {
     if (!slot || slot.isEmpty)
       return;
     const info = this.getEquipmentInfo(index)!;
-    const sprite = GameItemDatabase.instance.getImage(info.icon)!;
+    const sprite = GameItemDatabase.instance.getIcon(info.icon)!;
     const effectString = info.effects.join('\n');
     const tooltipData = new InventoryTooltipUIData(info.name, sprite, effectString, info.description);
     const pos = slot.node.getWorldPosition();
@@ -438,32 +452,30 @@ export class InventoryView extends Component {
     this.character.equip("", equipmentInfo.category as EquipmentCategory);
     const slot = this.inventoryManager.getSlot(targetInventorySlotItemIndex, "equipment")!;
     slot.setItem(equipmentInfo.id, 1);
-    const categoryIcon = this.getCategorySprite(equipmentInfo.category);
+    const categoryIcon = this.getCategoryIcon(equipmentInfo.category);
 
     const equipSlot = this.getEquipmentSlot(index)!;
-    equipSlot.init(new EquipmentSlotViewData(
-      index, null, null, categoryIcon,
-      (i) => this.selectEquipSlot(i),
-      (i) => this.hoverEquipment(i),
-      (i) => this.unHoverEquipment(i)
-    ));
+    this.initEquipmentSlotView(
+      equipSlot,
+      index,
+      null,
+      null,
+      categoryIcon
+    );
 
     if (this.currentTab === "equipment") {
-      const sprite = GameItemDatabase.instance.getImage(equipmentInfo.icon)!;
-      this.itemSlots[targetInventorySlotItemIndex].init(new InventoryGameItemSlotViewData(
+      const sprite = GameItemDatabase.instance.getIcon(equipmentInfo.icon)!;
+      this.initInventorySlot(
         targetInventorySlotItemIndex,
         equipmentInfo,
         sprite,
         1,
-        this.getCategorySprite(equipmentInfo.category)!,
-        (idx) => this.selectItem(idx),
-        (idx) => this.hoverItem(idx),
-        (idx) => this.unHoverItem(idx)
-      ));
+        this.getCategoryIcon(equipmentInfo.category)!
+      );
     }
   }
 
-  private getCategorySprite(category: EquipmentCategory | ConsumableCategory): SpriteFrame | null {
+  private getCategoryIcon(category: EquipmentCategory | ConsumableCategory): SpriteFrame | null {
     switch (category) {
       case "potion":
         return this.itemCategorySprites[0];
@@ -512,12 +524,10 @@ export class InventoryView extends Component {
   }
 
   private onHealthUpdate(event: BaseEvent) {
-    const healthUpdateEvent = event as HealthStatsChangedEvent;
     this.healthStatsLabel.string = `${this.character.currentHealth} / ${this.character.currentMaxHealth.amount}`;
   }
 
   private onManaUpdate(event: BaseEvent) {
-    const manaUpdateEvent = event as ManaStatsChangedEvent;
     this.manaStatsLabel.string = `${this.character.currentMana} / ${this.character.currentMaxMana.amount}`;
   }
 

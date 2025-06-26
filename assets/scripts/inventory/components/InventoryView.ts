@@ -166,7 +166,6 @@ export class InventoryView extends Component {
         gameItem = GameItemDatabase.instance.getConsumableInfo(inventorySlot.itemId)!;
       const icon = GameItemDatabase.instance.getIcon(gameItem.icon)!;
       const categoryIcon = this.getCategoryIcon(gameItem.category)!;
-      console.log("category: " + gameItem.category);
       data = new InventoryGameItemSlotViewData(gameItem, icon, inventorySlot.quantity, categoryIcon);
     }
     itemSlotView.updateData(data);

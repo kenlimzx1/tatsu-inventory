@@ -9,8 +9,6 @@ export class InitSceneController extends Component {
   private loadingLabel: Label = null!;
 
   async start() {
-    console.log("InitSceneController start");
-
     await this.loadDatabase();
 
     this.scheduleOnce(() => {

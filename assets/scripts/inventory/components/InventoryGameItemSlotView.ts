@@ -1,5 +1,6 @@
-import { _decorator, Button, Component, Input, Label, Node, Sprite, SpriteFrame, Tween, tween, Vec3 } from 'cc';
+import { _decorator, Button, Component, Input, Label, Node, Size, Sprite, SpriteFrame, Tween, tween, UITransform, Vec2, Vec3 } from 'cc';
 import { GameItem } from '../../gameItem/GameItem';
+import { FitToBox2D } from '../../utils/FitToBox2D';
 const { ccclass, property } = _decorator;
 
 export class InventoryGameItemSlotViewData {
@@ -42,6 +43,9 @@ export class InventoryGameItemSlotView extends Component {
   private onHovered: (index: number) => void = null!;
   private onUnhovered: (index: number) => void = null!;
 
+  private categoryIconReferenceSize: Size = new Size(40, 40);
+  private iconReferenceSize: Size = new Size(120, 120);
+
   public get isEmpty(): boolean {
     return this.data === null;
   }
@@ -76,8 +80,19 @@ export class InventoryGameItemSlotView extends Component {
       this.emptySlotIndicator.active = false;
       this.itemIcon.node.active = true;
       this.itemIcon.spriteFrame = data!.icon;
+
+      const itemIconReferenceSize: Size = FitToBox2D.fitToBox2D(data!.icon.originalSize, this.iconReferenceSize);
+      const itemIconTransform = this.itemIcon.getComponent(UITransform)!;
+      itemIconTransform.width = itemIconReferenceSize.width;
+      itemIconTransform.height = itemIconReferenceSize.height;
+
       this.categoryIcon.node.active = true;
       this.categoryIcon.spriteFrame = data!.categoryIcon;
+
+      const categoryIconReferenceSize: Size = FitToBox2D.fitToBox2D(data!.categoryIcon.originalSize, this.categoryIconReferenceSize);
+      const categoryIconTransform = this.categoryIcon.getComponent(UITransform)!;
+      categoryIconTransform.width = categoryIconReferenceSize.width;
+      categoryIconTransform.height = categoryIconReferenceSize.height;
     }
     this.updateQuantityLabel();
   }

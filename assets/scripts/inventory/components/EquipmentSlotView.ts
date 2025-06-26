@@ -1,5 +1,6 @@
-import { _decorator, Button, Component, EventTouch, Node, Sprite, SpriteFrame, tween, Tween, Vec3 } from 'cc';
+import { _decorator, Button, Component, EventTouch, Node, Size, Sprite, SpriteFrame, tween, Tween, UITransform, Vec3 } from 'cc';
 import { GameItem } from '../../gameItem/GameItem';
+import { FitToBox2D } from '../../utils/FitToBox2D';
 const { ccclass, property } = _decorator;
 
 export class EquipmentSlotViewData {
@@ -36,6 +37,9 @@ export class EquipmentSlotView extends Component {
   private onHovered: (index: number) => void = null!;
   private onUnhovered: (index: number) => void = null!;
 
+  private categoryIconReferenceSize: Size = new Size(40, 40);
+  private iconReferenceSize: Size = new Size(120, 120);
+
   public get isEmpty(): boolean {
     return this.data === null;
   }
@@ -56,6 +60,12 @@ export class EquipmentSlotView extends Component {
     this.index = index;
     this.categoryIcon.node.active = true;
     this.categoryIcon.spriteFrame = equipmentCategoryIcon;
+
+    const categoryIconReferenceSize: Size = FitToBox2D.fitToBox2D(equipmentCategoryIcon.originalSize, this.categoryIconReferenceSize);
+    const categoryIconTransform = this.categoryIcon.getComponent(UITransform)!;
+    categoryIconTransform.width = categoryIconReferenceSize.width;
+    categoryIconTransform.height = categoryIconReferenceSize.height;
+
     this.onSelected = onSelected;
     this.onHovered = onHovered;
     this.onUnhovered = onUnhovered;
@@ -72,6 +82,12 @@ export class EquipmentSlotView extends Component {
       this.emptySlotIndicator.active = false;
       this.itemIcon.node.active = true;
       this.itemIcon.spriteFrame = data!.icon;
+
+      const itemIconReferenceSize: Size = FitToBox2D.fitToBox2D(data!.icon.originalSize, this.iconReferenceSize);
+      const itemIconTransform = this.itemIcon.getComponent(UITransform)!;
+      itemIconTransform.width = itemIconReferenceSize.width;
+      itemIconTransform.height = itemIconReferenceSize.height;
+
       if (useAnimation) {
         tween(this.node)
           .to(.1, { scale: new Vec3(.9, .9, .9) })

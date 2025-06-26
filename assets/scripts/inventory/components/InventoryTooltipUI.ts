@@ -1,4 +1,5 @@
-import { _decorator, Component, Label, Node, Sprite, SpriteFrame, UITransform, Vec3, Widget } from 'cc';
+import { _decorator, Component, Label, Node, Size, Sprite, SpriteFrame, UITransform, Vec3, Widget } from 'cc';
+import { FitToBox2D } from '../../utils/FitToBox2D';
 const { ccclass, property } = _decorator;
 
 export type InventoryTooltipPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
@@ -37,9 +38,17 @@ export class InventoryTooltipUI extends Component {
   @property(Label)
   private itemDescription: Label = null!;
 
+  private iconReferenceSize: Size = new Size(150, 150);
+
   public show(data: InventoryTooltipUIData, worldPosition: Vec3, tooltipPosition: InventoryTooltipPosition): void {
     this.itemName.string = data.itemTitle;
     this.itemIcon.spriteFrame = data.itemIcon;
+
+    const itemIconReferenceSize: Size = FitToBox2D.fitToBox2D(data.itemIcon.originalSize, this.iconReferenceSize);
+    const itemIconTransform = this.itemIcon.getComponent(UITransform)!;
+    itemIconTransform.width = itemIconReferenceSize.width;
+    itemIconTransform.height = itemIconReferenceSize.height;
+
     this.itemStats.string = data.itemStats;
     this.itemDescription.string = data.itemDescription;
 
